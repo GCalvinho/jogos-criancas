@@ -333,18 +333,39 @@ html,body{height:100%;width:100%;overflow:hidden;background:#1a0a2e;font-family:
         <!-- shadow on floor -->
         <ellipse cx="100" cy="358" rx="55" ry="10" fill="url(#shadowGrad)"/>
 
-        <!-- ── DRESS ── -->
-        <!-- skirt — wide flared -->
+        <!-- ═══════════════════════════════════════════════
+             LAYER ORDER (back → front):
+             1. hair-back   — volume behind head
+             2. dress-skirt — wide skirt
+             3. arms        — behind torso sides
+             4. dress-bodice— torso
+             5. neck + necklace
+             6. head        — face base + ears
+             7. face        — eyes, mouth, nose, cheeks
+             8. hair-front  — fringe + top that overlaps forehead
+             9. hair-acc    — bows, tiara, flowers
+            10. crown       — on top of everything
+        ═══════════════════════════════════════════════ -->
+
+        <!-- 1 ── HAIR BACK (behind everything — sides, length, bulk) -->
+        <g id="hair-back">
+          <!-- back volume ellipse -->
+          <ellipse cx="100" cy="60" rx="57" ry="44" fill="#5D4037"/>
+          <!-- side volume bulges -->
+          <path d="M44,65 Q28,50 38,28 Q52,38 46,62Z" fill="#5D4037"/>
+          <path d="M156,65 Q172,50 162,28 Q148,38 154,62Z" fill="#5D4037"/>
+          <!-- top spikes (messy) -->
+          <path d="M100,28 Q88,5 108,10 Q105,32 100,28Z M72,22 Q62,2 78,8 Q78,26 72,22Z M128,22 Q138,2 122,8 Q122,26 128,22Z" fill="#4E342E"/>
+        </g>
+
+        <!-- 2 ── DRESS SKIRT -->
         <g id="dress-skirt">
           <path d="M55,195 Q10,270 5,340 Q30,355 100,358 Q170,355 195,340 Q190,270 145,195 Z"
                 fill="url(#dressGrad)" id="skirt-path"/>
-          <!-- skirt overlay layers for volume -->
           <path d="M65,210 Q30,265 28,335 Q60,348 100,350 Q140,348 172,335 Q170,265 135,210Z"
                 fill="rgba(255,255,255,.08)"/>
-          <!-- skirt trim bottom -->
           <path d="M8,338 Q55,358 100,360 Q145,358 192,338 Q160,350 100,352 Q40,350 8,338Z"
                 fill="rgba(255,255,255,.25)"/>
-          <!-- skirt sparkle dots -->
           <circle cx="60"  cy="280" r="3" fill="rgba(255,255,255,.5)"/>
           <circle cx="145" cy="260" r="2" fill="rgba(255,255,255,.4)"/>
           <circle cx="80"  cy="310" r="2.5" fill="rgba(255,255,255,.4)"/>
@@ -352,138 +373,125 @@ html,body{height:100%;width:100%;overflow:hidden;background:#1a0a2e;font-family:
           <circle cx="100" cy="335" r="2" fill="rgba(255,255,255,.35)"/>
         </g>
 
-        <!-- bodice -->
+        <!-- 3 ── ARMS (behind bodice) -->
+        <g id="arms">
+          <path d="M68,155 Q40,160 30,190 Q35,200 45,198 Q52,175 72,170Z" fill="url(#skinGrad)"/>
+          <ellipse cx="37" cy="197" rx="13" ry="11" fill="url(#skinGrad)"/>
+          <path d="M55,175 Q38,180 28,195 Q32,198 38,200 Q50,185 62,178Z" fill="url(#dressGrad)" opacity=".7"/>
+          <path d="M132,155 Q160,160 170,190 Q165,200 155,198 Q148,175 128,170Z" fill="url(#skinGrad)"/>
+          <ellipse cx="163" cy="197" rx="13" ry="11" fill="url(#skinGrad)"/>
+          <path d="M145,175 Q162,180 172,195 Q168,198 162,200 Q150,185 138,178Z" fill="url(#dressGrad)" opacity=".7"/>
+        </g>
+
+        <!-- 4 ── DRESS BODICE -->
         <g id="dress-bodice">
           <path d="M68,148 Q55,165 55,195 L145,195 Q145,165 132,148 Z"
                 fill="url(#dressGrad)" id="bodice-path"/>
-          <!-- bodice overlay -->
           <path d="M75,152 Q65,168 66,190 Q80,195 100,195 Q120,195 134,190 Q135,168 125,152Z"
                 fill="rgba(255,255,255,.12)"/>
-          <!-- neckline bow -->
           <path d="M85,152 Q100,145 115,152 Q108,158 100,156 Q92,158 85,152Z"
                 fill="rgba(255,255,255,.3)"/>
         </g>
 
-        <!-- arms -->
-        <g id="arms">
-          <!-- left arm -->
-          <path d="M68,155 Q40,160 30,190 Q35,200 45,198 Q52,175 72,170Z"
-                fill="url(#skinGrad)"/>
-          <!-- left hand -->
-          <ellipse cx="37" cy="197" rx="13" ry="11" fill="url(#skinGrad)"/>
-          <!-- left glove cuff -->
-          <path d="M55,175 Q38,180 28,195 Q32,198 38,200 Q50,185 62,178Z"
-                fill="url(#dressGrad)" opacity=".7"/>
-
-          <!-- right arm -->
-          <path d="M132,155 Q160,160 170,190 Q165,200 155,198 Q148,175 128,170Z"
-                fill="url(#skinGrad)"/>
-          <!-- right hand -->
-          <ellipse cx="163" cy="197" rx="13" ry="11" fill="url(#skinGrad)"/>
-          <!-- right glove cuff -->
-          <path d="M145,175 Q162,180 172,195 Q168,198 162,200 Q150,185 138,178Z"
-                fill="url(#dressGrad)" opacity=".7"/>
-        </g>
-
-        <!-- neck -->
+        <!-- 5 ── NECK + NECKLACE -->
         <rect x="88" y="128" width="24" height="26" rx="8" fill="url(#skinGrad)"/>
-        <!-- necklace -->
         <path d="M82,140 Q100,148 118,140" stroke="#FFD700" stroke-width="2" fill="none" stroke-linecap="round" id="necklace"/>
         <circle cx="100" cy="147" r="4" fill="#FFD700" id="necklace-gem"/>
 
-        <!-- ── HEAD ── -->
+        <!-- 6 ── HEAD BASE + EARS -->
         <g id="head-group">
-          <!-- head shape -->
-          <ellipse id="head-shape" cx="100" cy="82" rx="54" ry="56" fill="url(#skinGrad)"/>
-          <!-- jaw/chin definition -->
-          <path d="M60,105 Q100,135 140,105 Q140,125 100,132 Q60,125 60,105Z" fill="#FFCC80" opacity=".5"/>
-          <!-- ear left -->
-          <ellipse cx="47" cy="88" rx="10" ry="13" fill="url(#skinGrad)"/>
+          <!-- ear left (drawn before head so head overlaps outer ear edge) -->
+          <ellipse cx="47" cy="88" rx="11" ry="14" fill="url(#skinGrad)"/>
           <ellipse cx="47" cy="88" rx="5" ry="7" fill="#FFAB91" opacity=".4"/>
-          <!-- earring left -->
-          <circle cx="47" cy="100" r="4" fill="#FFD700" id="earring-l"/>
-          <circle cx="47" cy="100" r="2" fill="#E91E63" id="earring-gem-l"/>
+          <circle cx="47" cy="101" r="4" fill="#FFD700" id="earring-l"/>
+          <circle cx="47" cy="101" r="2" fill="#E91E63" id="earring-gem-l"/>
           <!-- ear right -->
-          <ellipse cx="153" cy="88" rx="10" ry="13" fill="url(#skinGrad)"/>
+          <ellipse cx="153" cy="88" rx="11" ry="14" fill="url(#skinGrad)"/>
           <ellipse cx="153" cy="88" rx="5" ry="7" fill="#FFAB91" opacity=".4"/>
-          <!-- earring right -->
-          <circle cx="153" cy="100" r="4" fill="#FFD700" id="earring-r"/>
-          <circle cx="153" cy="100" r="2" fill="#E91E63" id="earring-gem-r"/>
+          <circle cx="153" cy="101" r="4" fill="#FFD700" id="earring-r"/>
+          <circle cx="153" cy="101" r="2" fill="#E91E63" id="earring-gem-r"/>
+          <!-- head shape on top of ears -->
+          <ellipse id="head-shape" cx="100" cy="85" rx="54" ry="56" fill="url(#skinGrad)"/>
+          <!-- subtle jaw shadow -->
+          <path d="M58,110 Q100,138 142,110 Q140,128 100,134 Q60,128 58,110Z" fill="#FFCC80" opacity=".4"/>
         </g>
 
-        <!-- ── FACE ── -->
+        <!-- 7 ── FACE (eyes, brows, nose, mouth, cheeks) -->
         <g id="face-group">
-          <!-- eyebrows -->
-          <path id="brow-l" d="M65,65 Q76,60 85,64" stroke="#6D4C41" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-          <path id="brow-r" d="M115,64 Q124,60 135,65" stroke="#6D4C41" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path id="brow-l" d="M65,68 Q76,63 85,67" stroke="#6D4C41" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path id="brow-r" d="M115,67 Q124,63 135,68" stroke="#6D4C41" stroke-width="3.5" fill="none" stroke-linecap="round"/>
 
-          <!-- eyes — white + iris + pupil + shine -->
-          <ellipse cx="75"  cy="80" rx="13" ry="14" fill="#fff"/>
-          <ellipse cx="125" cy="80" rx="13" ry="14" fill="#fff"/>
-          <!-- upper lash shadow -->
-          <path d="M62,74 Q75,70 88,74" fill="rgba(0,0,0,.08)"/>
-          <path d="M112,74 Q125,70 138,74" fill="rgba(0,0,0,.08)"/>
-          <!-- iris -->
-          <circle cx="75"  cy="82" r="9" fill="#3E2723" id="iris-l"/>
-          <circle cx="125" cy="82" r="9" fill="#3E2723" id="iris-r"/>
-          <!-- iris colour overlay -->
-          <circle cx="75"  cy="82" r="7" fill="#5C6BC0" opacity=".7" id="iris-col-l"/>
-          <circle cx="125" cy="82" r="7" fill="#5C6BC0" opacity=".7" id="iris-col-r"/>
-          <!-- pupil -->
-          <circle cx="76"  cy="83" r="4" fill="#1a1a2e"/>
-          <circle cx="126" cy="83" r="4" fill="#1a1a2e"/>
+          <!-- eye whites -->
+          <ellipse cx="75"  cy="83" rx="13" ry="14" fill="#fff"/>
+          <ellipse cx="125" cy="83" rx="13" ry="14" fill="#fff"/>
+          <!-- iris dark base -->
+          <circle cx="75"  cy="85" r="9" fill="#3E2723" id="iris-l"/>
+          <circle cx="125" cy="85" r="9" fill="#3E2723" id="iris-r"/>
+          <!-- iris colour -->
+          <circle cx="75"  cy="85" r="7" fill="#5C6BC0" opacity=".8" id="iris-col-l"/>
+          <circle cx="125" cy="85" r="7" fill="#5C6BC0" opacity=".8" id="iris-col-r"/>
+          <!-- pupils -->
+          <circle cx="76"  cy="86" r="4" fill="#1a1a2e"/>
+          <circle cx="126" cy="86" r="4" fill="#1a1a2e"/>
           <!-- eye shine -->
-          <circle cx="79"  cy="78" r="3" fill="#fff" opacity=".9"/>
-          <circle cx="129" cy="78" r="3" fill="#fff" opacity=".9"/>
-          <circle cx="72"  cy="84" r="1.5" fill="#fff" opacity=".5"/>
-          <circle cx="122" cy="84" r="1.5" fill="#fff" opacity=".5"/>
-          <!-- eyelashes top -->
-          <path d="M62,74 Q63,68 65,70 M69,71 Q69,64 71,66 M76,70 Q77,63 79,65 M83,71 Q85,65 86,67 M88,74 Q91,68 92,70"
+          <circle cx="79"  cy="81" r="3"   fill="#fff" opacity=".95"/>
+          <circle cx="129" cy="81" r="3"   fill="#fff" opacity=".95"/>
+          <circle cx="72"  cy="87" r="1.5" fill="#fff" opacity=".5"/>
+          <circle cx="122" cy="87" r="1.5" fill="#fff" opacity=".5"/>
+          <!-- upper eyelash shadow -->
+          <path d="M62,77 Q75,73 88,77" fill="rgba(0,0,0,.1)"/>
+          <path d="M112,77 Q125,73 138,77" fill="rgba(0,0,0,.1)"/>
+          <!-- top lashes -->
+          <path d="M62,77 Q63,71 65,73 M69,74 Q69,67 71,69 M76,73 Q77,66 79,68 M83,74 Q85,68 86,70 M88,77 Q91,71 92,73"
                 stroke="#3E2723" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-          <path d="M112,74 Q113,68 115,70 M119,71 Q119,64 121,66 M126,70 Q127,63 129,65 M133,71 Q135,65 136,67 M138,74 Q141,68 142,70"
+          <path d="M112,77 Q113,71 115,73 M119,74 Q119,67 121,69 M126,73 Q127,66 129,68 M133,74 Q135,68 136,70 M138,77 Q141,71 142,73"
                 stroke="#3E2723" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-          <!-- lower lashes -->
-          <path d="M64,90 Q63,96 64,94 M72,93 Q72,99 73,97 M84,92 Q85,98 85,96"
+          <!-- bottom lashes -->
+          <path d="M64,93 Q63,99 64,97 M72,96 Q72,102 73,100 M84,95 Q85,101 85,99"
                 stroke="#3E2723" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-          <path d="M114,90 Q113,96 114,94 M122,93 Q122,99 123,97 M134,92 Q135,98 135,96"
+          <path d="M114,93 Q113,99 114,97 M122,96 Q122,102 123,100 M134,95 Q135,101 135,99"
                 stroke="#3E2723" stroke-width="1.2" fill="none" stroke-linecap="round"/>
 
           <!-- nose -->
-          <path d="M95,98 Q100,104 105,98" stroke="#FFAB91" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-          <circle cx="95"  cy="100" r="3" fill="#FFAB91" opacity=".5"/>
-          <circle cx="105" cy="100" r="3" fill="#FFAB91" opacity=".5"/>
+          <path d="M95,101 Q100,107 105,101" stroke="#FFAB91" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <circle cx="94"  cy="103" r="3" fill="#FFAB91" opacity=".5"/>
+          <circle cx="106" cy="103" r="3" fill="#FFAB91" opacity=".5"/>
 
-          <!-- mouth (sad default) -->
-          <path id="mouth-upper" d="M82,116 Q100,112 118,116" stroke="#E91E63" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-          <path id="mouth-lower" d="M82,116 Q100,122 118,116" fill="#F48FB1" opacity=".6"/>
-          <path id="mouth-smile" d="M85,116 Q100,128 115,116" stroke="#C2185B" stroke-width="3" fill="none" stroke-linecap="round" opacity="0"/>
+          <!-- mouth -->
+          <path id="mouth-upper" d="M83,119 Q100,115 117,119" stroke="#E91E63" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path id="mouth-lower" d="M83,119 Q100,125 117,119" fill="#F48FB1" opacity=".6"/>
+          <path id="mouth-smile" d="M86,119 Q100,131 114,119" stroke="#C2185B" stroke-width="3" fill="none" stroke-linecap="round" opacity="0"/>
 
-          <!-- cheeks (hidden until clean) -->
-          <ellipse id="cheek-l" cx="55"  cy="100" rx="16" ry="10" fill="#F48FB1" opacity="0"/>
-          <ellipse id="cheek-r" cx="145" cy="100" rx="16" ry="10" fill="#F48FB1" opacity="0"/>
+          <!-- cheeks -->
+          <ellipse id="cheek-l" cx="54"  cy="103" rx="16" ry="10" fill="#F48FB1" opacity="0"/>
+          <ellipse id="cheek-r" cx="146" cy="103" rx="16" ry="10" fill="#F48FB1" opacity="0"/>
         </g>
 
-        <!-- ── HAIR ── sits on top of head -->
-        <g id="hair-group">
-          <!-- default: messy brown -->
-          <ellipse id="hb1" cx="100" cy="55" rx="56" ry="42" fill="#5D4037"/>
-          <path id="hb2" d="M46,60 Q30,30 55,18 Q68,45 46,60Z M154,60 Q170,30 145,18 Q132,45 154,60Z" fill="#5D4037"/>
-          <path id="hb3" d="M100,28 Q88,5 108,10 Q105,32 100,28Z M72,22 Q62,2 78,8 Q78,26 72,22Z M128,22 Q138,2 122,8 Q122,26 128,22Z" fill="#4E342E"/>
-          <!-- messy flyaways -->
-          <path id="hb4" d="M44,65 Q25,42 38,28 M156,65 Q175,42 162,28 M88,28 Q80,5 95,15 M112,28 Q120,5 105,15"
-                stroke="#4E342E" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <!-- 8 ── HAIR FRONT (fringe / top strands that sit over the forehead) -->
+        <g id="hair-front">
+          <!-- messy fringe strands over forehead -->
+          <path d="M54,72 Q48,52 58,38 Q64,55 60,72Z" fill="#5D4037"/>
+          <path d="M70,63 Q66,40 78,30 Q80,50 76,65Z" fill="#4E342E"/>
+          <path d="M88,58 Q86,34 98,28 Q97,48 93,60Z" fill="#5D4037"/>
+          <path d="M112,58 Q114,34 102,28 Q103,48 107,60Z" fill="#5D4037"/>
+          <path d="M130,63 Q134,40 122,30 Q120,50 124,65Z" fill="#4E342E"/>
+          <path d="M146,72 Q152,52 142,38 Q136,55 140,72Z" fill="#5D4037"/>
+          <!-- flyaway strands -->
+          <path d="M44,68 Q26,44 40,26" stroke="#4E342E" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path d="M156,68 Q174,44 160,26" stroke="#4E342E" stroke-width="3.5" fill="none" stroke-linecap="round"/>
         </g>
-        <!-- hair accessories layer -->
+
+        <!-- 9 ── HAIR ACCESSORIES (bows, tiara, flowers) -->
         <g id="hair-acc-group"></g>
 
-        <!-- ── CROWN (hidden until final) ── -->
+        <!-- 10 ── CROWN (hidden until end) -->
         <g id="crown" opacity="0">
-          <path d="M68,30 L75,10 L88,22 L100,5 L112,22 L125,10 L132,30Z" fill="#FFD700"/>
-          <path d="M68,30 L132,30 L128,38 L72,38Z" fill="#FFA000"/>
-          <circle cx="100" cy="10" r="5" fill="#E91E63"/>
-          <circle cx="75"  cy="14" r="3" fill="#4FC3F7"/>
-          <circle cx="125" cy="14" r="3" fill="#4FC3F7"/>
-          <path d="M68,30 L132,30" stroke="#FFA000" stroke-width="2"/>
+          <path d="M68,32 L75,12 L88,24 L100,7 L112,24 L125,12 L132,32Z" fill="#FFD700"/>
+          <path d="M68,32 L132,32 L128,40 L72,40Z" fill="#FFA000"/>
+          <circle cx="100" cy="12" r="5" fill="#E91E63"/>
+          <circle cx="75"  cy="16" r="3" fill="#4FC3F7"/>
+          <circle cx="125" cy="16" r="3" fill="#4FC3F7"/>
+          <path d="M68,32 L132,32" stroke="#FFA000" stroke-width="2"/>
         </g>
 
       </svg>
@@ -794,60 +802,90 @@ function setFace(happy){
 // ══════════════════════════════════════════════════════════════════
 // HAIR STYLES
 // ══════════════════════════════════════════════════════════════════
+// Each style has: back (drawn behind head), front (fringe over forehead), acc (accessories on top)
 const HAIR_STYLES=[
   { emoji:'🎀', label:'Rabo',
-    html:`<ellipse cx="100" cy="58" rx="56" ry="38" fill="#5D4037"/>
-          <ellipse cx="100" cy="40" rx="48" ry="28" fill="#4E342E"/>
-          <!-- ponytail -->
-          <path d="M100,85 Q130,100 125,140 Q115,155 105,145 Q100,130 100,110Z" fill="#5D4037"/>
-          <path d="M100,85 Q70,100 75,140 Q85,155 95,145 Q100,130 100,110Z" fill="#4E342E" opacity=".6"/>`,
-    acc:`<path d="M78,48 Q88,40 100,46 Q112,40 122,48 Q112,58 100,54 Q88,58 78,48Z" fill="#E91E63"/>
-         <path d="M78,48 Q68,42 72,34 Q82,36 78,48Z" fill="#E91E63"/>
-         <path d="M122,48 Q132,42 128,34 Q118,36 122,48Z" fill="#E91E63"/>
-         <circle cx="100" cy="47" r="6" fill="#FF80AB"/>` },
+    back:`<!-- ponytail bulk behind head -->
+          <ellipse cx="100" cy="58" rx="56" ry="38" fill="#5D4037"/>
+          <path d="M100,90 Q132,108 128,155 Q118,168 108,158 Q104,138 100,115Z" fill="#5D4037"/>
+          <path d="M100,90 Q68,108 72,155 Q82,168 92,158 Q96,138 100,115Z" fill="#4E342E" opacity=".8"/>`,
+    front:`<!-- fringe strands -->
+           <path d="M56,74 Q50,54 60,40 Q66,57 62,74Z" fill="#5D4037"/>
+           <path d="M72,65 Q68,44 80,34 Q82,52 78,67Z" fill="#4E342E"/>
+           <path d="M90,60 Q88,38 100,32 Q99,50 95,62Z" fill="#5D4037"/>
+           <path d="M110,60 Q112,38 100,32 Q101,50 105,62Z" fill="#5D4037"/>
+           <path d="M128,65 Q132,44 120,34 Q118,52 122,67Z" fill="#4E342E"/>
+           <path d="M144,74 Q150,54 140,40 Q134,57 138,74Z" fill="#5D4037"/>`,
+    acc:`<path d="M80,46 Q90,38 100,44 Q110,38 120,46 Q110,56 100,52 Q90,56 80,46Z" fill="#E91E63"/>
+         <path d="M80,46 Q70,40 74,32 Q84,34 80,46Z" fill="#E91E63"/>
+         <path d="M120,46 Q130,40 126,32 Q116,34 120,46Z" fill="#E91E63"/>
+         <circle cx="100" cy="45" r="7" fill="#FF80AB"/>
+         <circle cx="100" cy="45" r="3" fill="#fff" opacity=".5"/>` },
+
   { emoji:'👑', label:'Coque',
-    html:`<ellipse cx="100" cy="62" rx="52" ry="34" fill="#5D4037"/>
-          <!-- bun on top -->
-          <circle cx="100" cy="28" r="28" fill="#5D4037"/>
-          <circle cx="100" cy="28" r="20" fill="#4E342E"/>
-          <!-- side strands -->
-          <path d="M50,65 Q40,90 48,115" stroke="#4E342E" stroke-width="10" fill="none" stroke-linecap="round"/>
-          <path d="M150,65 Q160,90 152,115" stroke="#4E342E" stroke-width="10" fill="none" stroke-linecap="round"/>`,
-    acc:`<path d="M75,12 L82,0 L90,10 L100,0 L110,10 L118,0 L125,12Z" fill="#FFD700"/>
-         <rect x="75" y="12" width="50" height="10" rx="4" fill="#FFA000"/>
-         <circle cx="100" cy="2" r="5" fill="#E91E63"/>
-         <circle cx="82"  cy="4" r="3" fill="#4FC3F7"/>
-         <circle cx="118" cy="4" r="3" fill="#4FC3F7"/>` },
+    back:`<!-- bun + side strands behind -->
+          <ellipse cx="100" cy="64" rx="52" ry="34" fill="#5D4037"/>
+          <circle cx="100" cy="26" r="30" fill="#5D4037"/>
+          <circle cx="100" cy="26" r="22" fill="#4E342E"/>
+          <path d="M50,68 Q38,95 46,120" stroke="#5D4037" stroke-width="12" fill="none" stroke-linecap="round"/>
+          <path d="M150,68 Q162,95 154,120" stroke="#5D4037" stroke-width="12" fill="none" stroke-linecap="round"/>`,
+    front:`<!-- smooth hairline over forehead, no flyaways for bun style -->
+           <path d="M54,76 Q48,62 58,48 Q62,62 60,76Z" fill="#5D4037"/>
+           <path d="M70,68 Q66,50 78,42 Q80,58 76,70Z" fill="#4E342E"/>
+           <path d="M94,64 Q93,46 100,40 Q107,46 106,64Z" fill="#5D4037"/>
+           <path d="M130,68 Q134,50 122,42 Q120,58 124,70Z" fill="#4E342E"/>
+           <path d="M146,76 Q152,62 142,48 Q138,62 140,76Z" fill="#5D4037"/>`,
+    acc:`<path d="M75,8 L82,-4 L90,8 L100,-6 L110,8 L118,-4 L125,8Z" fill="#FFD700"/>
+         <rect x="72" y="8" width="56" height="12" rx="4" fill="#FFA000"/>
+         <circle cx="100" cy="-2" r="6" fill="#E91E63"/>
+         <circle cx="80"  cy="2"  r="4" fill="#4FC3F7"/>
+         <circle cx="120" cy="2"  r="4" fill="#4FC3F7"/>
+         <path d="M72,8 L128,8" stroke="#FF8F00" stroke-width="1.5"/>` },
+
   { emoji:'🌸', label:'Tranças',
-    html:`<ellipse cx="100" cy="55" rx="55" ry="40" fill="#5D4037"/>
-          <!-- left braid -->
-          <path d="M50,70 Q38,100 42,145" stroke="#5D4037" stroke-width="14" fill="none" stroke-linecap="round"/>
-          <path d="M50,70 Q36,98 40,143" stroke="#4E342E" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="8 6"/>
-          <!-- right braid -->
-          <path d="M150,70 Q162,100 158,145" stroke="#5D4037" stroke-width="14" fill="none" stroke-linecap="round"/>
-          <path d="M150,70 Q164,98 160,143" stroke="#4E342E" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="8 6"/>`,
-    acc:`<circle cx="50"  cy="72"  r="9" fill="#F48FB1"/>
-         <circle cx="50"  cy="72"  r="5" fill="#E91E63"/>
-         <circle cx="150" cy="72"  r="9" fill="#F48FB1"/>
-         <circle cx="150" cy="72"  r="5" fill="#E91E63"/>
-         <!-- flower on top -->
-         <circle cx="100" cy="22" r="8" fill="#F48FB1"/>
-         <circle cx="90"  cy="28" r="7" fill="#F48FB1"/>
-         <circle cx="110" cy="28" r="7" fill="#F48FB1"/>
-         <circle cx="100" cy="32" r="7" fill="#F48FB1"/>
-         <circle cx="100" cy="26" r="6" fill="#FFD700"/>` },
+    back:`<!-- braids hang behind, start from sides of head -->
+          <ellipse cx="100" cy="56" rx="55" ry="40" fill="#5D4037"/>
+          <path d="M52,72 Q40,105 44,150" stroke="#5D4037" stroke-width="16" fill="none" stroke-linecap="round"/>
+          <path d="M52,72 Q38,103 42,148" stroke="#4E342E" stroke-width="9" fill="none" stroke-linecap="round" stroke-dasharray="9 7"/>
+          <path d="M148,72 Q160,105 156,150" stroke="#5D4037" stroke-width="16" fill="none" stroke-linecap="round"/>
+          <path d="M148,72 Q162,103 158,148" stroke="#4E342E" stroke-width="9" fill="none" stroke-linecap="round" stroke-dasharray="9 7"/>`,
+    front:`<!-- neat parted fringe -->
+           <path d="M54,76 Q49,56 60,44 Q64,60 60,76Z" fill="#5D4037"/>
+           <path d="M70,68 Q66,48 78,38 Q80,54 76,68Z" fill="#4E342E"/>
+           <path d="M86,64 Q85,44 94,36 Q95,52 92,65Z" fill="#5D4037"/>
+           <path d="M114,64 Q115,44 106,36 Q105,52 108,65Z" fill="#5D4037"/>
+           <path d="M130,68 Q134,48 122,38 Q120,54 124,68Z" fill="#4E342E"/>
+           <path d="M146,76 Q151,56 140,44 Q136,60 140,76Z" fill="#5D4037"/>`,
+    acc:`<circle cx="52"  cy="74" r="10" fill="#F48FB1"/>
+         <circle cx="52"  cy="74" r="6"  fill="#E91E63"/>
+         <circle cx="148" cy="74" r="10" fill="#F48FB1"/>
+         <circle cx="148" cy="74" r="6"  fill="#E91E63"/>
+         <circle cx="100" cy="20" r="9" fill="#F48FB1"/>
+         <circle cx="90"  cy="27" r="8" fill="#F48FB1"/>
+         <circle cx="110" cy="27" r="8" fill="#F48FB1"/>
+         <circle cx="100" cy="32" r="8" fill="#F48FB1"/>
+         <circle cx="100" cy="26" r="7" fill="#FFD700"/>
+         <circle cx="100" cy="26" r="3" fill="#fff" opacity=".6"/>` },
+
   { emoji:'💜', label:'Solto',
-    html:`<ellipse cx="100" cy="55" rx="58" ry="42" fill="#5D4037"/>
-          <!-- long flowing sides -->
-          <path d="M48,70 Q32,110 38,170 Q44,180 52,170 Q48,120 58,85Z" fill="#5D4037"/>
-          <path d="M152,70 Q168,110 162,170 Q156,180 148,170 Q152,120 142,85Z" fill="#5D4037"/>
-          <!-- back flow -->
-          <path d="M62,80 Q50,130 54,175 Q70,185 80,175 Q72,130 78,90Z" fill="#4E342E" opacity=".7"/>
-          <path d="M138,80 Q150,130 146,175 Q130,185 120,175 Q128,130 122,90Z" fill="#4E342E" opacity=".7"/>`,
-    acc:`<path d="M60,42 Q100,35 140,42 Q130,50 100,48 Q70,50 60,42Z" fill="#CE93D8" opacity=".8"/>
-         <circle cx="100" cy="30" r="5" fill="#CE93D8"/>
-         <circle cx="82"  cy="34" r="3" fill="#CE93D8"/>
-         <circle cx="118" cy="34" r="3" fill="#CE93D8"/>` },
+    back:`<!-- long flowing hair, falls down sides and behind -->
+          <ellipse cx="100" cy="56" rx="58" ry="42" fill="#5D4037"/>
+          <path d="M46,72 Q30,115 36,175 Q43,186 53,176 Q48,125 58,88Z" fill="#5D4037"/>
+          <path d="M154,72 Q170,115 164,175 Q157,186 147,176 Q152,125 142,88Z" fill="#5D4037"/>
+          <path d="M60,82 Q48,135 52,178 Q68,190 78,180 Q70,132 76,92Z" fill="#4E342E" opacity=".75"/>
+          <path d="M140,82 Q152,135 148,178 Q132,190 122,180 Q130,132 124,92Z" fill="#4E342E" opacity=".75"/>`,
+    front:`<!-- soft flowing fringe -->
+           <path d="M55,76 Q50,55 62,42 Q66,58 62,76Z" fill="#5D4037"/>
+           <path d="M70,68 Q67,47 80,37 Q82,54 78,70Z" fill="#4E342E"/>
+           <path d="M88,62 Q87,41 98,34 Q99,52 95,63Z" fill="#5D4037"/>
+           <path d="M112,62 Q113,41 102,34 Q101,52 105,63Z" fill="#5D4037"/>
+           <path d="M130,68 Q133,47 120,37 Q118,54 122,70Z" fill="#4E342E"/>
+           <path d="M145,76 Q150,55 138,42 Q134,58 138,76Z" fill="#5D4037"/>`,
+    acc:`<path d="M62,44 Q100,37 138,44 Q128,53 100,51 Q72,53 62,44Z" fill="#CE93D8" opacity=".9"/>
+         <circle cx="100" cy="28" r="6" fill="#CE93D8"/>
+         <circle cx="83"  cy="32" r="4" fill="#CE93D8"/>
+         <circle cx="117" cy="32" r="4" fill="#CE93D8"/>
+         <circle cx="100" cy="28" r="2.5" fill="#fff" opacity=".6"/>` },
 ];
 
 let selHair=-1;
@@ -865,7 +903,8 @@ let hairDoneOnce=false;
 function applyHair(i){
   selHair=i;
   const h=HAIR_STYLES[i];
-  document.getElementById('hair-group').innerHTML=h.html;
+  document.getElementById('hair-back').innerHTML=h.back;
+  document.getElementById('hair-front').innerHTML=h.front;
   document.getElementById('hair-acc-group').innerHTML=h.acc;
   spawnSparklesAround();
   if(!hairDoneOnce){ hairDoneOnce=true; addStars(3); }
@@ -1035,13 +1074,23 @@ function resetGame(){
   // reset face
   setFace(false);
 
-  // reset hair to messy
-  document.getElementById('hair-group').innerHTML=`
-    <ellipse id="hb1" cx="100" cy="55" rx="56" ry="42" fill="#5D4037"/>
-    <path id="hb2" d="M46,60 Q30,30 55,18 Q68,45 46,60Z M154,60 Q170,30 145,18 Q132,45 154,60Z" fill="#5D4037"/>
-    <path id="hb3" d="M100,28 Q88,5 108,10 Q105,32 100,28Z M72,22 Q62,2 78,8 Q78,26 72,22Z M128,22 Q138,2 122,8 Q122,26 128,22Z" fill="#4E342E"/>
-    <path id="hb4" d="M44,65 Q25,42 38,28 M156,65 Q175,42 162,28 M88,28 Q80,5 95,15 M112,28 Q120,5 105,15"
-          stroke="#4E342E" stroke-width="4" fill="none" stroke-linecap="round"/>
+  // reset hair to messy (back layer)
+  document.getElementById('hair-back').innerHTML=`
+    <ellipse cx="100" cy="60" rx="57" ry="44" fill="#5D4037"/>
+    <path d="M44,65 Q28,50 38,28 Q52,38 46,62Z" fill="#5D4037"/>
+    <path d="M156,65 Q172,50 162,28 Q148,38 154,62Z" fill="#5D4037"/>
+    <path d="M100,28 Q88,5 108,10 Q105,32 100,28Z M72,22 Q62,2 78,8 Q78,26 72,22Z M128,22 Q138,2 122,8 Q122,26 128,22Z" fill="#4E342E"/>
+  `;
+  // reset hair front (fringe)
+  document.getElementById('hair-front').innerHTML=`
+    <path d="M54,72 Q48,52 58,38 Q64,55 60,72Z" fill="#5D4037"/>
+    <path d="M70,63 Q66,40 78,30 Q80,50 76,65Z" fill="#4E342E"/>
+    <path d="M88,58 Q86,34 98,28 Q97,48 93,60Z" fill="#5D4037"/>
+    <path d="M112,58 Q114,34 102,28 Q103,48 107,60Z" fill="#5D4037"/>
+    <path d="M130,63 Q134,40 122,30 Q120,50 124,65Z" fill="#4E342E"/>
+    <path d="M146,72 Q152,52 142,38 Q136,55 140,72Z" fill="#5D4037"/>
+    <path d="M44,68 Q26,44 40,26" stroke="#4E342E" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M156,68 Q174,44 160,26" stroke="#4E342E" stroke-width="3.5" fill="none" stroke-linecap="round"/>
   `;
   document.getElementById('hair-acc-group').innerHTML='';
 
