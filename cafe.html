@@ -137,16 +137,19 @@
 
   #receipt-screen {
     position: fixed; inset: 0; z-index: 200; background: var(--paper);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 24px; gap: 20px;
+    display: flex; flex-direction: column; align-items: stretch;
+    padding-top: env(safe-area-inset-top, 0px);
     transform: scale(0.8); opacity: 0; pointer-events: none;
     transition: transform .35s cubic-bezier(.4,0,.2,1), opacity .35s;
+    overflow: hidden;
   }
   #receipt-screen.open { transform: scale(1); opacity: 1; pointer-events: auto; }
   .receipt-paper {
-    background: #fff; border-radius: 24px; padding: 28px 24px 24px;
-    width: 100%; max-width: 340px; box-shadow: 0 8px 30px var(--shadow);
-    border: 3px solid var(--cream); display: flex; flex-direction: column; gap: 14px;
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px 20px 12px;
+    display: flex; flex-direction: column; gap: 14px;
   }
   .receipt-top { text-align: center; font-size: 3rem; }
   .receipt-items { display: flex; flex-direction: column; gap: 8px; }
@@ -157,7 +160,37 @@
   .ri-price { margin-left: auto; font-weight: 900; }
   .receipt-divider { border: none; border-top: 3px dashed var(--cream); }
   .receipt-total { display:flex; align-items:center; justify-content:space-between; font-size:1.8rem; font-weight:900; }
-  .new-table-btn {
+
+  /* ── SIGNATURE ── */
+  .receipt-footer {
+    flex-shrink: 0;
+    background: #fff;
+    border-top: 3px dashed #e0d0b0;
+    padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    display: flex; flex-direction: column; gap: 10px;
+    align-items: center;
+  }
+  .sig-label { font-size: 1.4rem; }
+  #sig-canvas {
+    border: 3px dashed #ccc;
+    border-radius: 16px;
+    background: #fafafa;
+    width: 100%; max-width: 340px;
+    height: 90px;
+    touch-action: none;
+    cursor: crosshair;
+    display: block;
+  }
+  #sig-canvas.signed { border-color: #C0622A; border-style: solid; }
+  .sig-clear {
+    background: #eee; border: none; border-radius: 50px;
+    padding: 6px 18px; font-size: 1.2rem; cursor: pointer;
+    transition: background .15s;
+  }
+  .sig-clear:active { background: #ddd; }
+  .sig-row { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 340px; justify-content: flex-end; }
+    .new-table-btn {
     background: var(--brown); border: none; border-radius: 50px;
     padding: 16px 32px; font-size: 2.5rem; cursor: pointer;
     box-shadow: 0 5px 0 #8A4418; transition: transform .08s, box-shadow .08s;
@@ -190,14 +223,21 @@
   </div>
 </div>
 
-<div id="receipt-screen">
+<div id="receipt-screen" aria-live="polite">
   <div class="receipt-paper">
-    <div class="receipt-top">😋</div>
+    <div class="receipt-top">🎉</div>
     <div class="receipt-items" id="receipt-items"></div>
     <hr class="receipt-divider">
     <div class="receipt-total"><span>💶</span><span id="receipt-total-text"></span></div>
   </div>
-  <button class="new-table-btn" onclick="newTable()">🆕☕</button>
+  <div class="receipt-footer">
+    <div class="sig-label">✍️</div>
+    <canvas id="sig-canvas" width="680" height="180"></canvas>
+    <div class="sig-row">
+      <button class="sig-clear" onclick="clearSig()">🗑️</button>
+      <button class="new-table-btn" onclick="newTable()">🆕☕</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -313,7 +353,44 @@ if('serviceWorker' in navigator){
   const blob=new Blob([sw],{type:'text/javascript'});
   navigator.serviceWorker.register(URL.createObjectURL(blob));
 }
+// ── SIGNATURE ────────────────────────────────────────────
+function initSig() {
+  const canvas = document.getElementById('sig-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#C0622A';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  let drawing = false, lastX = 0, lastY = 0;
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const src = e.touches ? e.touches[0] : e;
+    return [(src.clientX - rect.left) * scaleX, (src.clientY - rect.top) * scaleY];
+  }
+  function start(e) { e.preventDefault(); drawing=true; [lastX,lastY]=getPos(e); canvas.classList.add('signed'); }
+  function draw(e)  { e.preventDefault(); if(!drawing)return; const [x,y]=getPos(e); ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(x,y); ctx.stroke(); [lastX,lastY]=[x,y]; }
+  function stop(e)  { e.preventDefault(); drawing=false; }
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup',   stop);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove',  draw,  {passive:false});
+  canvas.addEventListener('touchend',   stop,  {passive:false});
+}
+
+function clearSig() {
+  const canvas = document.getElementById('sig-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  canvas.classList.remove('signed');
+}
+
 init();
+initSig();
 </script>
 </body>
 </html>
