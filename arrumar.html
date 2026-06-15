@@ -5,820 +5,1108 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Arrumar">
-<meta name="theme-color" content="#4FC3F7">
-<title>🛁 Hora de Arrumar!</title>
+<meta name="apple-mobile-web-app-title" content="Princesa">
+<meta name="theme-color" content="#C77DFF">
+<title>👸 Princesa</title>
 <style>
-:root {
-  --sky:    #4FC3F7;
-  --sunny:  #FFD740;
-  --grass:  #66BB6A;
-  --pink:   #F48FB1;
-  --purple: #CE93D8;
-  --peach:  #FFCC80;
-  --ink:    #37474F;
-  --white:  #FFFFFF;
-  --safe-top:    env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+:root{
+  --rose:#F48FB1; --lilac:#C77DFF; --gold:#FFD700; --sky:#B3E5FC;
+  --mint:#80DEEA; --cream:#FFF8E7; --ink:#4A235A;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
 }
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-html, body { height: 100%; width: 100%; overflow: hidden; background: #E3F2FD; font-family: 'Helvetica Neue', Arial, sans-serif; }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+html,body{height:100%;width:100%;overflow:hidden;background:#1a0a2e;font-family:'Helvetica Neue',Arial,sans-serif;}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh;background:linear-gradient(180deg,#1a0a2e 0%,#2d1b4e 100%);}
 
-/* ══ LAYOUT ══════════════════════════════════════════════ */
-#app {
-  display: flex; flex-direction: column;
-  height: 100%; height: 100dvh;
+/* ── STARS BG ── */
+#stars-bg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.star-dot{position:absolute;border-radius:50%;background:#fff;animation:twinkle linear infinite;}
+@keyframes twinkle{0%,100%{opacity:.2}50%{opacity:1}}
+
+/* ── PROGRESS ── */
+#topbar{
+  position:relative;z-index:10;
+  display:flex;align-items:center;gap:8px;
+  padding:8px 14px;
+  padding-top:calc(8px + var(--safe-top));
+  background:rgba(0,0,0,.3);
+  backdrop-filter:blur(8px);
+  flex-shrink:0;
 }
+.star-pip{font-size:1.3rem;transition:transform .3s,filter .3s;filter:grayscale(1) opacity(.25);}
+.star-pip.lit{filter:none;transform:scale(1.2);}
+.star-pip.pop{animation:sPop .4s;}
+@keyframes sPop{0%,100%{transform:scale(1.2)}50%{transform:scale(2)}}
+#phase-indicator{margin-left:auto;font-size:1.5rem;display:flex;gap:4px;}
+.phase-dot{font-size:1.1rem;filter:grayscale(1) opacity(.3);transition:filter .3s;}
+.phase-dot.active{filter:none;}
 
-/* ══ PROGRESS BAR ════════════════════════════════════════ */
-#progress-bar {
-  background: rgba(255,255,255,.6);
-  padding: 8px 14px 6px;
-  padding-top: calc(8px + var(--safe-top));
-  display: flex; align-items: center; gap: 8px;
-  flex-shrink: 0;
-  z-index: 10;
-}
-.star-track { display: flex; gap: 4px; flex: 1; }
-.star { font-size: 1.6rem; transition: transform .3s; filter: grayscale(1) opacity(.3); }
-.star.lit { filter: none; transform: scale(1.2); }
-.star.pop { animation: starPop .4s; }
-@keyframes starPop { 0%,100%{transform:scale(1.2)} 50%{transform:scale(1.8)} }
-
-/* ══ SCENE ═══════════════════════════════════════════════ */
-#scene {
-  flex: 1; position: relative; overflow: hidden;
-  background: linear-gradient(180deg, #B3E5FC 0%, #E1F5FE 55%, #C8E6C9 55%, #A5D6A7 100%);
+/* ── SCENE ── */
+#scene{
+  position:relative;z-index:1;
+  flex:1;overflow:hidden;
+  display:flex;align-items:flex-end;justify-content:center;
 }
 
-/* house */
-#house-svg { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; }
+/* room background */
+#room-bg{position:absolute;inset:0;width:100%;height:100%;}
 
-/* character */
-#char-wrap {
-  position: absolute;
-  bottom: 22%;
-  left: 50%; transform: translateX(-50%);
-  width: min(42vw, 180px);
-  transition: bottom .4s;
+/* princess container — centred, sized proportionally */
+#princess-wrap{
+  position:absolute;
+  bottom:0;
+  left:50%;transform:translateX(-50%);
+  width:min(55vw,220px);
+  z-index:5;
 }
-#char-svg { width: 100%; height: auto; display: block; }
+#princess-svg{width:100%;height:auto;display:block;overflow:visible;}
 
-/* dirt overlays on character */
-.char-dirt { transition: opacity .5s; }
+/* dirt canvas sits exactly on top of princess */
+#dirt-canvas{
+  position:absolute;
+  top:0;left:0;
+  width:100%;height:100%;
+  z-index:6;
+  border-radius:4px;
+  touch-action:none;
+  cursor:crosshair;
+}
 
 /* bubbles */
-.bubble {
-  position: absolute; border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.9), rgba(135,206,235,.4));
-  border: 2px solid rgba(255,255,255,.7);
-  pointer-events: none;
-  animation: bubbleFloat linear forwards;
-}
-@keyframes bubbleFloat {
-  0%   { opacity:.9; transform: translateY(0) scale(1); }
-  100% { opacity:0;  transform: translateY(-120px) scale(.4); }
-}
+.bubble{position:absolute;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.95),rgba(150,220,255,.3));border:1.5px solid rgba(255,255,255,.8);pointer-events:none;animation:bFloat linear forwards;z-index:20;}
+@keyframes bFloat{0%{opacity:.9;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-160px) scale(.3)}}
 
-/* sparkle */
-.sparkle {
-  position: absolute; font-size: 1.4rem; pointer-events: none;
-  animation: sparklePop .6s ease-out forwards;
-}
-@keyframes sparklePop {
-  0%   { opacity:1; transform: scale(0) rotate(0deg); }
-  60%  { opacity:1; transform: scale(1.4) rotate(20deg); }
-  100% { opacity:0; transform: scale(1) rotate(40deg) translateY(-30px); }
-}
+/* sparkles */
+.sparkle-el{position:absolute;pointer-events:none;z-index:30;animation:spFloat .8s ease-out forwards;}
+@keyframes spFloat{0%{opacity:1;transform:scale(0) rotate(0)}60%{opacity:1;transform:scale(1.3) rotate(20deg)}100%{opacity:0;transform:scale(.8) rotate(45deg) translateY(-40px)}}
 
-/* water splash on char */
-.splash {
-  position: absolute; font-size: 2rem; pointer-events: none;
-  animation: splashAnim .5s ease-out forwards;
-}
-@keyframes splashAnim {
-  0%   { opacity:1; transform: translateY(0) scale(1); }
-  100% { opacity:0; transform: translateY(-50px) scale(1.5); }
-}
+/* water drip during bath */
+.drip{position:absolute;width:6px;height:12px;border-radius:50%;background:rgba(100,200,255,.7);pointer-events:none;animation:dripFall .6s ease-in forwards;z-index:25;}
+@keyframes dripFall{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(60px)}}
 
-/* house dirt patches */
-.hdirt { transition: opacity .6s; }
+/* ── BOTTOM PANEL ── */
+#panel{
+  position:relative;z-index:10;
+  flex-shrink:0;
+  padding:10px 12px;
+  padding-bottom:calc(10px + var(--safe-bottom));
+  background:rgba(255,255,255,.07);
+  backdrop-filter:blur(12px);
+  border-top:1px solid rgba(255,255,255,.15);
+  display:flex;flex-direction:column;gap:8px;align-items:center;
+}
+#phase-label{font-size:1.6rem;letter-spacing:2px;}
 
-/* ══ PHASE PANEL ═════════════════════════════════════════ */
-#phase-panel {
-  flex-shrink: 0;
-  background: #fff;
-  border-top: 4px solid #e0e0e0;
-  padding: 10px 10px;
-  padding-bottom: calc(10px + var(--safe-bottom));
-  display: flex; flex-direction: column; gap: 8px;
-  z-index: 10;
+/* action buttons */
+#action-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.abtn{
+  width:70px;height:70px;border-radius:20px;border:none;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-size:2rem;
+  background:rgba(255,255,255,.12);
+  border:2px solid rgba(255,255,255,.2);
+  color:#fff;
+  transition:transform .1s,background .2s,border-color .2s,box-shadow .1s;
+  box-shadow:0 4px 15px rgba(0,0,0,.3);
+  -webkit-user-select:none;user-select:none;
+  position:relative;
+  flex-shrink:0;
 }
+.abtn:active{transform:scale(.88);}
+.abtn.selected{background:rgba(199,125,255,.4);border-color:var(--lilac);box-shadow:0 0 20px rgba(199,125,255,.5);}
+.abtn.done{background:rgba(100,200,120,.3);border-color:#80e090;box-shadow:0 0 15px rgba(100,200,120,.4);}
+.abtn .tick{position:absolute;top:-5px;right:-5px;background:#66BB6A;color:#fff;border-radius:50%;width:20px;height:20px;font-size:.7rem;display:flex;align-items:center;justify-content:center;font-weight:900;}
 
-/* phase title row */
-#phase-title { font-size: 1.8rem; text-align: center; line-height: 1; }
+/* hint text for bath */
+#bath-hint{color:rgba(255,255,255,.6);font-size:.85rem;text-align:center;}
 
-/* action buttons grid */
-#action-grid {
-  display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+/* next button */
+#next-btn{
+  background:linear-gradient(135deg,#C77DFF,#9C27B0);
+  border:none;border-radius:50px;
+  padding:12px 32px;font-size:1.8rem;color:#fff;cursor:pointer;
+  box-shadow:0 5px 20px rgba(199,125,255,.5);
+  transition:transform .1s,box-shadow .1s;
+  display:none;
 }
-.action-btn {
-  background: linear-gradient(145deg, #fff 0%, #f5f5f5 100%);
-  border: 3px solid #e0e0e0;
-  border-radius: 20px;
-  padding: 10px 14px;
-  font-size: 2.2rem;
-  cursor: pointer;
-  transition: transform .1s, box-shadow .1s, border-color .1s;
-  box-shadow: 0 4px 0 #d0d0d0;
-  min-width: 70px; min-height: 70px;
-  display: flex; align-items: center; justify-content: center;
-  position: relative;
-  -webkit-user-select: none; user-select: none;
-}
-.action-btn:active { transform: scale(.88) translateY(3px); box-shadow: 0 1px 0 #d0d0d0; }
-.action-btn.done { border-color: #66BB6A; background: linear-gradient(145deg, #f1f8f1, #e8f5e9); box-shadow: 0 4px 0 #4caf50; }
-.action-btn.selected { border-color: var(--sky); background: linear-gradient(145deg, #e3f2fd, #bbdefb); box-shadow: 0 4px 0 #29b6f6; }
-.action-btn .check { position:absolute; top:-6px; right:-6px; font-size:1rem; background:#66BB6A; color:#fff; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; }
+#next-btn.show{display:block;animation:popIn .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{0%{transform:scale(0)}100%{transform:scale(1)}}
+#next-btn:active{transform:scale(.93);}
 
-/* next phase btn */
-#next-btn {
-  background: linear-gradient(135deg, #66BB6A, #43A047);
-  border: none; border-radius: 50px;
-  padding: 12px 28px; font-size: 2rem;
-  cursor: pointer; color: #fff; font-weight: 900;
-  box-shadow: 0 5px 0 #2E7D32;
-  transition: transform .1s, box-shadow .1s;
-  display: none; align-self: center;
+/* ── CUSTOMISATION TRAY (hair/clothes) ── */
+#custom-tray{
+  display:flex;gap:8px;overflow-x:auto;padding:4px 2px;
+  scrollbar-width:none;width:100%;justify-content:center;
 }
-#next-btn.show { display: block; animation: bounceIn .4s; }
-@keyframes bounceIn { 0%{transform:scale(0)} 70%{transform:scale(1.15)} 100%{transform:scale(1)} }
-#next-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #2E7D32; }
+#custom-tray::-webkit-scrollbar{display:none;}
+.ctile{
+  flex-shrink:0;width:64px;height:64px;border-radius:16px;border:2px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.1);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:1.8rem;transition:transform .1s,border-color .2s,box-shadow .2s;
+  box-shadow:0 3px 10px rgba(0,0,0,.3);
+}
+.ctile:active{transform:scale(.88);}
+.ctile.selected{border-color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.5);transform:scale(1.08);}
 
-/* ══ CELEBRATION ═════════════════════════════════════════ */
-#celebration {
-  position: fixed; inset: 0; z-index: 200;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 20px;
-  background: rgba(255,253,231,.95);
-  opacity: 0; pointer-events: none;
-  transition: opacity .5s;
+/* ── CELEBRATION ── */
+#celebration{
+  position:fixed;inset:0;z-index:200;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+  background:radial-gradient(ellipse at center,rgba(60,0,80,.95) 0%,rgba(10,0,30,.98) 100%);
+  opacity:0;pointer-events:none;
+  transition:opacity .6s;
 }
-#celebration.show { opacity: 1; pointer-events: auto; }
-#celeb-char { font-size: 8rem; animation: dance 1s infinite alternate; }
-@keyframes dance { 0%{transform:rotate(-8deg) scale(1)} 100%{transform:rotate(8deg) scale(1.08)} }
-#celeb-stars { font-size: 2.5rem; letter-spacing: 6px; }
-#play-again {
-  background: linear-gradient(135deg, #FF7043, #F4511E);
-  border: none; border-radius: 50px;
-  padding: 16px 36px; font-size: 2.5rem;
-  cursor: pointer; color: #fff;
-  box-shadow: 0 6px 0 #BF360C;
-  transition: transform .1s, box-shadow .1s;
+#celebration.show{opacity:1;pointer-events:auto;}
+#celeb-wrap{position:relative;width:min(60vw,240px);}
+#celeb-princess{width:100%;height:auto;display:block;overflow:visible;}
+#celeb-glow{position:absolute;inset:-20px;background:radial-gradient(ellipse,rgba(255,215,0,.3),transparent 70%);animation:glow 2s ease-in-out infinite alternate;pointer-events:none;}
+@keyframes glow{0%{transform:scale(1)}100%{transform:scale(1.15)}}
+#celeb-title{font-size:2.5rem;color:var(--gold);text-shadow:0 0 20px var(--gold);letter-spacing:4px;}
+#celeb-stars{font-size:2rem;letter-spacing:6px;}
+#play-again{
+  background:linear-gradient(135deg,#FFD700,#FFA000);
+  border:none;border-radius:50px;padding:16px 36px;font-size:2rem;
+  cursor:pointer;color:#4A235A;font-weight:900;
+  box-shadow:0 6px 25px rgba(255,215,0,.4);
+  transition:transform .1s;
 }
-#play-again:active { transform: translateY(4px); box-shadow: 0 2px 0 #BF360C; }
-.confetti-piece { position:fixed; width:12px; height:12px; border-radius:2px; pointer-events:none; z-index:300; animation:cfall linear forwards; }
-@keyframes cfall { 0%{opacity:1;transform:translateY(-20px) rotate(0deg)} 100%{opacity:0;transform:translateY(100vh) rotate(720deg)} }
+#play-again:active{transform:scale(.93);}
 
-/* ══ PHASE TRANSITION FLASH ══════════════════════════════ */
-#flash {
-  position: fixed; inset: 0; z-index: 190;
-  background: #fff; opacity: 0; pointer-events: none;
-  transition: opacity .15s;
-}
-#flash.on { opacity: .7; }
+/* confetti */
+.cpiece{position:fixed;border-radius:2px;pointer-events:none;z-index:300;animation:cfall linear forwards;}
+@keyframes cfall{0%{opacity:1;transform:translateY(-20px) rotate(0)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}
+
+/* flash */
+#flash{position:fixed;inset:0;z-index:190;background:#fff;opacity:0;pointer-events:none;transition:opacity .12s;}
+#flash.on{opacity:.6;}
 </style>
 </head>
 <body>
+<div id="stars-bg"></div>
 <div id="app">
 
-  <!-- PROGRESS -->
-  <div id="progress-bar">
-    <div class="star-track" id="star-track"></div>
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div id="star-track"></div>
+    <div id="phase-indicator"></div>
   </div>
 
   <!-- SCENE -->
   <div id="scene">
 
-    <!-- HOUSE SVG (background walls, window, floor, dirt) -->
-    <svg id="house-svg" viewBox="0 0 400 500" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
-      <!-- sky done by CSS gradient -->
+    <!-- Room background SVG -->
+    <svg id="room-bg" viewBox="0 0 400 480" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
+      <!-- wall -->
+      <defs>
+        <linearGradient id="wallGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2d1b4e"/>
+          <stop offset="100%" stop-color="#3d2060"/>
+        </linearGradient>
+        <linearGradient id="floorGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#1a0a2e"/>
+          <stop offset="100%" stop-color="#0d0520"/>
+        </linearGradient>
+        <radialGradient id="windowGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffe4a0" stop-opacity=".6"/>
+          <stop offset="100%" stop-color="#ffb74d" stop-opacity=".1"/>
+        </radialGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="softglow"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
 
-      <!-- floor / wall -->
-      <rect x="0" y="300" width="400" height="200" fill="#A5D6A7"/>
-      <rect x="20" y="220" width="360" height="220" rx="8" fill="#FFF8E7" stroke="#E0CC99" stroke-width="3"/>
+      <rect width="400" height="480" fill="url(#wallGrad)"/>
 
-      <!-- window -->
-      <rect x="40" y="245" width="90" height="70" rx="8" fill="#B3E5FC" stroke="#90CAF9" stroke-width="3"/>
-      <line x1="85" y1="245" x2="85" y2="315" stroke="#90CAF9" stroke-width="2"/>
-      <line x1="40" y1="280" x2="130" y2="280" stroke="#90CAF9" stroke-width="2"/>
-      <!-- window curtain -->
-      <path d="M40,245 Q52,265 40,285" fill="#F48FB1" opacity=".7"/>
-      <path d="M130,245 Q118,265 130,285" fill="#F48FB1" opacity=".7"/>
+      <!-- floor -->
+      <rect y="370" width="400" height="110" fill="url(#floorGrad)"/>
+      <!-- floor shine -->
+      <ellipse cx="200" cy="372" rx="180" ry="6" fill="rgba(255,255,255,.04)"/>
 
-      <!-- picture on wall -->
-      <rect x="260" y="240" width="70" height="55" rx="5" fill="#FFF" stroke="#BDBDBD" stroke-width="2"/>
-      <circle cx="295" cy="262" r="12" fill="#FFD740"/>
-      <path d="M265,290 Q280,270 295,278 Q310,285 325,268 L325,292 Z" fill="#66BB6A"/>
+      <!-- wall panel decoration -->
+      <rect x="10" y="10" width="380" height="360" rx="4" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="2"/>
+      <rect x="20" y="20" width="360" height="340" rx="3" fill="none" stroke="rgba(255,255,255,.04)" stroke-width="1"/>
 
-      <!-- shelf -->
-      <rect x="155" y="252" width="80" height="8" rx="4" fill="#D7CCC8"/>
-      <rect x="163" y="235" width="14" height="18" rx="3" fill="#EF9A9A"/>
-      <rect x="182" y="238" width="10" height="15" rx="2" fill="#80CBC4"/>
-      <rect x="197" y="233" width="12" height="20" rx="3" fill="#FFD54F"/>
-      <rect x="213" y="240" width="8"  height="13" rx="2" fill="#CE93D8"/>
+      <!-- Window left -->
+      <g filter="url(#softglow)">
+        <rect x="18" y="40" width="85" height="110" rx="8" fill="#1a0a2e" stroke="#7B1FA2" stroke-width="2"/>
+        <rect x="22" y="44" width="77" height="102" rx="6" fill="url(#windowGlow)"/>
+        <line x1="60" y1="44" x2="60" y2="146" stroke="#7B1FA2" stroke-width="1.5"/>
+        <line x1="22" y1="95" x2="99" y2="95" stroke="#7B1FA2" stroke-width="1.5"/>
+        <!-- stars outside -->
+        <circle cx="35" cy="65" r="2" fill="#FFD700" opacity=".8"/>
+        <circle cx="75" cy="55" r="1.5" fill="#fff" opacity=".7"/>
+        <circle cx="88" cy="78" r="2" fill="#FFD700" opacity=".6"/>
+        <circle cx="42" cy="120" r="1.5" fill="#fff" opacity=".5"/>
+        <!-- moon -->
+        <path d="M55,70 Q65,75 55,90 Q48,82 55,70Z" fill="#FFE082"/>
+      </g>
+      <!-- curtain left -->
+      <path d="M18,40 Q32,75 22,146 L18,146Z" fill="#7B1FA2" opacity=".7"/>
+      <path d="M103,40 Q89,75 99,146 L103,146Z" fill="#7B1FA2" opacity=".7"/>
 
-      <!-- floor line -->
-      <rect x="20" y="415" width="360" height="6" rx="3" fill="#C8E6C9"/>
+      <!-- Window right -->
+      <g filter="url(#softglow)">
+        <rect x="297" y="40" width="85" height="110" rx="8" fill="#1a0a2e" stroke="#7B1FA2" stroke-width="2"/>
+        <rect x="301" y="44" width="77" height="102" rx="6" fill="url(#windowGlow)"/>
+        <line x1="339" y1="44" x2="339" y2="146" stroke="#7B1FA2" stroke-width="1.5"/>
+        <line x1="301" y1="95" x2="378" y2="95" stroke="#7B1FA2" stroke-width="1.5"/>
+        <circle cx="315" cy="60" r="2" fill="#FFD700" opacity=".8"/>
+        <circle cx="358" cy="72" r="1.5" fill="#fff" opacity=".7"/>
+        <circle cx="325" cy="115" r="2" fill="#FFD700" opacity=".6"/>
+        <path d="M350,58 Q360,63 350,78 Q343,70 350,58Z" fill="#FFE082"/>
+      </g>
+      <path d="M297,40 Q311,75 301,146 L297,146Z" fill="#7B1FA2" opacity=".7"/>
+      <path d="M382,40 Q368,75 378,146 L382,146Z" fill="#7B1FA2" opacity=".7"/>
 
-      <!-- toy on floor (initially messy) -->
-      <g id="toy-block" transform="translate(50,390)">
-        <rect width="28" height="28" rx="5" fill="#EF9A9A" transform="rotate(-20)"/>
-        <rect x="20" y="5" width="22" height="22" rx="4" fill="#80CBC4" transform="rotate(10)"/>
-        <rect x="-15" y="18" width="20" height="20" rx="4" fill="#FFD54F" transform="rotate(-5)"/>
+      <!-- Mirror / vanity centre top -->
+      <g filter="url(#glow)">
+        <ellipse cx="200" cy="90" rx="48" ry="58" fill="#0d0520" stroke="#FFD700" stroke-width="2.5"/>
+        <ellipse cx="200" cy="90" rx="42" ry="52" fill="#1a0a2e" stroke="#FFD700" stroke-width="1" opacity=".5"/>
+        <!-- reflection shimmer -->
+        <ellipse cx="185" cy="72" rx="8" ry="14" fill="rgba(255,255,255,.04)"/>
+      </g>
+      <!-- mirror frame ornaments -->
+      <circle cx="200" cy="34" r="5" fill="#FFD700" filter="url(#glow)"/>
+      <circle cx="152" cy="58" r="3.5" fill="#FFD700" filter="url(#glow)"/>
+      <circle cx="248" cy="58" r="3.5" fill="#FFD700" filter="url(#glow)"/>
+
+      <!-- Vanity table -->
+      <rect x="130" y="148" width="140" height="12" rx="5" fill="#4a235a" stroke="#7B1FA2" stroke-width="1.5"/>
+      <!-- table legs -->
+      <rect x="138" y="160" width="8" height="50" rx="4" fill="#4a235a"/>
+      <rect x="254" y="160" width="8" height="50" rx="4" fill="#4a235a"/>
+      <!-- table surface items -->
+      <rect x="148" y="136" width="10" height="14" rx="3" fill="#F48FB1"/><!-- perfume -->
+      <ellipse cx="153" cy="134" rx="5" ry="3" fill="#F48FB1"/>
+      <rect x="170" y="140" width="8" height="10" rx="2" fill="#80DEEA"/><!-- cream -->
+      <circle cx="220" cy="142" r="7" fill="#CE93D8" opacity=".8"/><!-- powder -->
+      <rect x="230" y="138" width="6" height="12" rx="3" fill="#FFD700"/><!-- lipstick -->
+      <!-- brush -->
+      <rect x="240" y="132" width="4" height="18" rx="2" fill="#795548"/>
+      <ellipse cx="242" cy="131" rx="5" ry="3" fill="#FFF8E7"/>
+
+      <!-- Dirty items on floor -->
+      <!-- puddle -->
+      <ellipse id="floor-puddle" cx="120" cy="400" rx="35" ry="12" fill="#5C6BC0" opacity=".35"/>
+      <!-- sock -->
+      <g id="floor-sock">
+        <path d="M290,390 Q305,384 322,388 Q334,396 328,405 Q315,410 300,402Z" fill="#F48FB1" transform="rotate(12,308,395)"/>
+        <ellipse cx="295" cy="397" rx="8" ry="5" fill="#F48FB1" transform="rotate(12,295,397)"/>
+      </g>
+      <!-- hair clip on floor -->
+      <g id="floor-clip">
+        <ellipse cx="160" cy="408" rx="15" ry="5" fill="#FFD700" transform="rotate(-20,160,408)"/>
+        <ellipse cx="160" cy="408" rx="8" ry="3" fill="#FFA000" transform="rotate(-20,160,408)"/>
+      </g>
+      <!-- dust bunnies -->
+      <ellipse id="dust1" cx="80" cy="430" rx="20" ry="7" fill="#78909C" opacity=".3"/>
+      <ellipse id="dust2" cx="340" cy="420" rx="16" ry="5" fill="#78909C" opacity=".3"/>
+      <!-- toy star on floor -->
+      <g id="floor-star">
+        <path d="M340,385 L344,374 L348,385 L359,385 L351,392 L354,403 L344,397 L334,403 L337,392 L329,385Z" fill="#FFD700" opacity=".7" transform="rotate(15,344,388)"/>
       </g>
 
-      <!-- sock on floor -->
-      <g id="sock">
-        <path d="M300,410 Q310,405 325,408 Q335,415 330,422 Q320,425 308,418 Z" fill="#F48FB1" transform="rotate(15,315,415)"/>
-      </g>
-
-      <!-- HOUSE DIRT patches -->
-      <g id="house-dirt">
-        <!-- window smudge -->
-        <ellipse class="hdirt" id="hd1" cx="70" cy="270" rx="18" ry="12" fill="#8D6E63" opacity=".35"/>
-        <ellipse class="hdirt" id="hd2" cx="100" cy="290" rx="10" ry="7" fill="#8D6E63" opacity=".3"/>
-        <!-- wall splat 1 -->
-        <circle class="hdirt" id="hd3" cx="200" cy="300" r="14" fill="#8D6E63" opacity=".25"/>
-        <circle class="hdirt" id="hd4" cx="215" cy="310" r="8"  fill="#8D6E63" opacity=".2"/>
-        <!-- floor mud -->
-        <ellipse class="hdirt" id="hd5" cx="160" cy="420" rx="30" ry="10" fill="#6D4C41" opacity=".35"/>
-        <ellipse class="hdirt" id="hd6" cx="330" cy="430" rx="22" ry="8"  fill="#6D4C41" opacity=".3"/>
-        <!-- dust bunnies -->
-        <ellipse class="hdirt" id="hd7" cx="90"  cy="432" rx="15" ry="6"  fill="#9E9E9E" opacity=".35"/>
-        <ellipse class="hdirt" id="hd8" cx="350" cy="395" rx="12" ry="5"  fill="#9E9E9E" opacity=".3"/>
-      </g>
+      <!-- floor wall baseboard -->
+      <rect x="0" y="368" width="400" height="8" rx="0" fill="#4a235a"/>
     </svg>
 
-    <!-- CHARACTER -->
-    <div id="char-wrap">
-      <svg id="char-svg" viewBox="0 0 160 280" xmlns="http://www.w3.org/2000/svg">
+    <!-- PRINCESS -->
+    <div id="princess-wrap">
+      <svg id="princess-svg" viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        <defs>
+          <radialGradient id="skinGrad" cx="45%" cy="35%" r="60%">
+            <stop offset="0%" stop-color="#FFE0B2"/>
+            <stop offset="100%" stop-color="#FFCC80"/>
+          </radialGradient>
+          <radialGradient id="dressGrad" cx="50%" cy="20%" r="80%">
+            <stop offset="0%" stop-color="#F48FB1" id="dg1"/>
+            <stop offset="100%" stop-color="#C2185B" id="dg2"/>
+          </radialGradient>
+          <radialGradient id="shadowGrad" cx="50%" cy="0%" r="100%">
+            <stop offset="0%" stop-color="rgba(0,0,0,.4)"/>
+            <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+          </radialGradient>
+          <filter id="charGlow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <clipPath id="headClip"><ellipse cx="100" cy="82" rx="54" ry="56"/></clipPath>
+        </defs>
 
-        <!-- BODY / CLOTHES — coloured by JS -->
-        <g id="char-body">
-          <!-- legs -->
-          <rect id="leg-l" x="42" y="195" width="28" height="70" rx="12" fill="#FFCC80"/>
-          <rect id="leg-r" x="90" y="195" width="28" height="70" rx="12" fill="#FFCC80"/>
-          <!-- shoes -->
-          <ellipse id="shoe-l" cx="56"  cy="265" rx="18" ry="10" fill="#757575"/>
-          <ellipse id="shoe-r" cx="104" cy="265" rx="18" ry="10" fill="#757575"/>
-          <!-- torso -->
-          <rect id="torso" x="30" y="130" width="100" height="75" rx="20" fill="#EF9A9A"/>
-          <!-- arms -->
-          <rect id="arm-l" x="4"  y="135" width="28" height="55" rx="12" fill="#FFCC80"/>
-          <rect id="arm-r" x="128" y="135" width="28" height="55" rx="12" fill="#FFCC80"/>
-          <!-- hands -->
-          <circle id="hand-l" cx="18"  cy="193" r="13" fill="#FFCC80"/>
-          <circle id="hand-r" cx="142" cy="193" r="13" fill="#FFCC80"/>
-          <!-- neck -->
-          <rect x="62" y="115" width="36" height="22" rx="8" fill="#FFCC80"/>
-          <!-- head -->
-          <ellipse id="head" cx="80" cy="88" rx="50" ry="52" fill="#FFCC80"/>
-          <!-- ears -->
-          <ellipse cx="31" cy="90" rx="11" ry="13" fill="#FFCC80"/>
-          <ellipse cx="129" cy="90" rx="11" ry="13" fill="#FFCC80"/>
+        <!-- shadow on floor -->
+        <ellipse cx="100" cy="358" rx="55" ry="10" fill="url(#shadowGrad)"/>
+
+        <!-- ── DRESS ── -->
+        <!-- skirt — wide flared -->
+        <g id="dress-skirt">
+          <path d="M55,195 Q10,270 5,340 Q30,355 100,358 Q170,355 195,340 Q190,270 145,195 Z"
+                fill="url(#dressGrad)" id="skirt-path"/>
+          <!-- skirt overlay layers for volume -->
+          <path d="M65,210 Q30,265 28,335 Q60,348 100,350 Q140,348 172,335 Q170,265 135,210Z"
+                fill="rgba(255,255,255,.08)"/>
+          <!-- skirt trim bottom -->
+          <path d="M8,338 Q55,358 100,360 Q145,358 192,338 Q160,350 100,352 Q40,350 8,338Z"
+                fill="rgba(255,255,255,.25)"/>
+          <!-- skirt sparkle dots -->
+          <circle cx="60"  cy="280" r="3" fill="rgba(255,255,255,.5)"/>
+          <circle cx="145" cy="260" r="2" fill="rgba(255,255,255,.4)"/>
+          <circle cx="80"  cy="310" r="2.5" fill="rgba(255,255,255,.4)"/>
+          <circle cx="130" cy="300" r="3" fill="rgba(255,255,255,.5)"/>
+          <circle cx="100" cy="335" r="2" fill="rgba(255,255,255,.35)"/>
         </g>
 
-        <!-- FACE -->
-        <g id="char-face">
-          <!-- eyes -->
-          <ellipse cx="62" cy="82" rx="9" ry="10" fill="#fff"/>
-          <circle  cx="64" cy="83" r="5"  fill="#5D4037"/>
-          <circle  cx="65" cy="81" r="2"  fill="#fff"/>
-          <ellipse cx="98" cy="82" rx="9" ry="10" fill="#fff"/>
-          <circle  cx="100" cy="83" r="5" fill="#5D4037"/>
-          <circle  cx="101" cy="81" r="2" fill="#fff"/>
-          <!-- brows (sad when dirty) -->
-          <path id="brow-l" d="M54,68 Q63,65 70,68" stroke="#5D4037" stroke-width="3" fill="none" stroke-linecap="round"/>
-          <path id="brow-r" d="M90,68 Q97,65 106,68" stroke="#5D4037" stroke-width="3" fill="none" stroke-linecap="round"/>
-          <!-- mouth (sad) -->
-          <path id="mouth" d="M65,108 Q80,102 95,108" stroke="#5D4037" stroke-width="3" fill="none" stroke-linecap="round"/>
-          <!-- cheeks -->
-          <ellipse id="cheek-l" cx="45" cy="100" rx="12" ry="8" fill="#F48FB1" opacity="0"/>
-          <ellipse id="cheek-r" cx="115" cy="100" rx="12" ry="8" fill="#F48FB1" opacity="0"/>
+        <!-- bodice -->
+        <g id="dress-bodice">
+          <path d="M68,148 Q55,165 55,195 L145,195 Q145,165 132,148 Z"
+                fill="url(#dressGrad)" id="bodice-path"/>
+          <!-- bodice overlay -->
+          <path d="M75,152 Q65,168 66,190 Q80,195 100,195 Q120,195 134,190 Q135,168 125,152Z"
+                fill="rgba(255,255,255,.12)"/>
+          <!-- neckline bow -->
+          <path d="M85,152 Q100,145 115,152 Q108,158 100,156 Q92,158 85,152Z"
+                fill="rgba(255,255,255,.3)"/>
+        </g>
+
+        <!-- arms -->
+        <g id="arms">
+          <!-- left arm -->
+          <path d="M68,155 Q40,160 30,190 Q35,200 45,198 Q52,175 72,170Z"
+                fill="url(#skinGrad)"/>
+          <!-- left hand -->
+          <ellipse cx="37" cy="197" rx="13" ry="11" fill="url(#skinGrad)"/>
+          <!-- left glove cuff -->
+          <path d="M55,175 Q38,180 28,195 Q32,198 38,200 Q50,185 62,178Z"
+                fill="url(#dressGrad)" opacity=".7"/>
+
+          <!-- right arm -->
+          <path d="M132,155 Q160,160 170,190 Q165,200 155,198 Q148,175 128,170Z"
+                fill="url(#skinGrad)"/>
+          <!-- right hand -->
+          <ellipse cx="163" cy="197" rx="13" ry="11" fill="url(#skinGrad)"/>
+          <!-- right glove cuff -->
+          <path d="M145,175 Q162,180 172,195 Q168,198 162,200 Q150,185 138,178Z"
+                fill="url(#dressGrad)" opacity=".7"/>
+        </g>
+
+        <!-- neck -->
+        <rect x="88" y="128" width="24" height="26" rx="8" fill="url(#skinGrad)"/>
+        <!-- necklace -->
+        <path d="M82,140 Q100,148 118,140" stroke="#FFD700" stroke-width="2" fill="none" stroke-linecap="round" id="necklace"/>
+        <circle cx="100" cy="147" r="4" fill="#FFD700" id="necklace-gem"/>
+
+        <!-- ── HEAD ── -->
+        <g id="head-group">
+          <!-- head shape -->
+          <ellipse id="head-shape" cx="100" cy="82" rx="54" ry="56" fill="url(#skinGrad)"/>
+          <!-- jaw/chin definition -->
+          <path d="M60,105 Q100,135 140,105 Q140,125 100,132 Q60,125 60,105Z" fill="#FFCC80" opacity=".5"/>
+          <!-- ear left -->
+          <ellipse cx="47" cy="88" rx="10" ry="13" fill="url(#skinGrad)"/>
+          <ellipse cx="47" cy="88" rx="5" ry="7" fill="#FFAB91" opacity=".4"/>
+          <!-- earring left -->
+          <circle cx="47" cy="100" r="4" fill="#FFD700" id="earring-l"/>
+          <circle cx="47" cy="100" r="2" fill="#E91E63" id="earring-gem-l"/>
+          <!-- ear right -->
+          <ellipse cx="153" cy="88" rx="10" ry="13" fill="url(#skinGrad)"/>
+          <ellipse cx="153" cy="88" rx="5" ry="7" fill="#FFAB91" opacity=".4"/>
+          <!-- earring right -->
+          <circle cx="153" cy="100" r="4" fill="#FFD700" id="earring-r"/>
+          <circle cx="153" cy="100" r="2" fill="#E91E63" id="earring-gem-r"/>
+        </g>
+
+        <!-- ── FACE ── -->
+        <g id="face-group">
+          <!-- eyebrows -->
+          <path id="brow-l" d="M65,65 Q76,60 85,64" stroke="#6D4C41" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path id="brow-r" d="M115,64 Q124,60 135,65" stroke="#6D4C41" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+          <!-- eyes — white + iris + pupil + shine -->
+          <ellipse cx="75"  cy="80" rx="13" ry="14" fill="#fff"/>
+          <ellipse cx="125" cy="80" rx="13" ry="14" fill="#fff"/>
+          <!-- upper lash shadow -->
+          <path d="M62,74 Q75,70 88,74" fill="rgba(0,0,0,.08)"/>
+          <path d="M112,74 Q125,70 138,74" fill="rgba(0,0,0,.08)"/>
+          <!-- iris -->
+          <circle cx="75"  cy="82" r="9" fill="#3E2723" id="iris-l"/>
+          <circle cx="125" cy="82" r="9" fill="#3E2723" id="iris-r"/>
+          <!-- iris colour overlay -->
+          <circle cx="75"  cy="82" r="7" fill="#5C6BC0" opacity=".7" id="iris-col-l"/>
+          <circle cx="125" cy="82" r="7" fill="#5C6BC0" opacity=".7" id="iris-col-r"/>
+          <!-- pupil -->
+          <circle cx="76"  cy="83" r="4" fill="#1a1a2e"/>
+          <circle cx="126" cy="83" r="4" fill="#1a1a2e"/>
+          <!-- eye shine -->
+          <circle cx="79"  cy="78" r="3" fill="#fff" opacity=".9"/>
+          <circle cx="129" cy="78" r="3" fill="#fff" opacity=".9"/>
+          <circle cx="72"  cy="84" r="1.5" fill="#fff" opacity=".5"/>
+          <circle cx="122" cy="84" r="1.5" fill="#fff" opacity=".5"/>
+          <!-- eyelashes top -->
+          <path d="M62,74 Q63,68 65,70 M69,71 Q69,64 71,66 M76,70 Q77,63 79,65 M83,71 Q85,65 86,67 M88,74 Q91,68 92,70"
+                stroke="#3E2723" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <path d="M112,74 Q113,68 115,70 M119,71 Q119,64 121,66 M126,70 Q127,63 129,65 M133,71 Q135,65 136,67 M138,74 Q141,68 142,70"
+                stroke="#3E2723" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <!-- lower lashes -->
+          <path d="M64,90 Q63,96 64,94 M72,93 Q72,99 73,97 M84,92 Q85,98 85,96"
+                stroke="#3E2723" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+          <path d="M114,90 Q113,96 114,94 M122,93 Q122,99 123,97 M134,92 Q135,98 135,96"
+                stroke="#3E2723" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+
           <!-- nose -->
-          <ellipse cx="80" cy="96" rx="6" ry="4" fill="#FFAB91"/>
+          <path d="M95,98 Q100,104 105,98" stroke="#FFAB91" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <circle cx="95"  cy="100" r="3" fill="#FFAB91" opacity=".5"/>
+          <circle cx="105" cy="100" r="3" fill="#FFAB91" opacity=".5"/>
+
+          <!-- mouth (sad default) -->
+          <path id="mouth-upper" d="M82,116 Q100,112 118,116" stroke="#E91E63" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path id="mouth-lower" d="M82,116 Q100,122 118,116" fill="#F48FB1" opacity=".6"/>
+          <path id="mouth-smile" d="M85,116 Q100,128 115,116" stroke="#C2185B" stroke-width="3" fill="none" stroke-linecap="round" opacity="0"/>
+
+          <!-- cheeks (hidden until clean) -->
+          <ellipse id="cheek-l" cx="55"  cy="100" rx="16" ry="10" fill="#F48FB1" opacity="0"/>
+          <ellipse id="cheek-r" cx="145" cy="100" rx="16" ry="10" fill="#F48FB1" opacity="0"/>
         </g>
 
-        <!-- HAIR — swapped by JS (default: messy dirty) -->
-        <g id="char-hair">
-          <!-- messy base -->
-          <ellipse id="hair-base" cx="80" cy="68" rx="52" ry="38" fill="#5D4037"/>
-          <path id="hair-extra" d="M30,55 Q20,30 45,25 Q55,50 30,55Z M130,55 Q140,30 115,25 Q105,50 130,55Z M80,35 Q70,10 95,15 Q90,40 80,35Z" fill="#5D4037"/>
-          <!-- messy strands -->
-          <path id="hair-messy" d="M28,70 Q15,50 30,35 M132,70 Q145,50 130,35 M60,33 Q50,10 70,18 M100,33 Q110,10 90,18" stroke="#5D4037" stroke-width="5" fill="none" stroke-linecap="round" opacity="1"/>
+        <!-- ── HAIR ── sits on top of head -->
+        <g id="hair-group">
+          <!-- default: messy brown -->
+          <ellipse id="hb1" cx="100" cy="55" rx="56" ry="42" fill="#5D4037"/>
+          <path id="hb2" d="M46,60 Q30,30 55,18 Q68,45 46,60Z M154,60 Q170,30 145,18 Q132,45 154,60Z" fill="#5D4037"/>
+          <path id="hb3" d="M100,28 Q88,5 108,10 Q105,32 100,28Z M72,22 Q62,2 78,8 Q78,26 72,22Z M128,22 Q138,2 122,8 Q122,26 128,22Z" fill="#4E342E"/>
+          <!-- messy flyaways -->
+          <path id="hb4" d="M44,65 Q25,42 38,28 M156,65 Q175,42 162,28 M88,28 Q80,5 95,15 M112,28 Q120,5 105,15"
+                stroke="#4E342E" stroke-width="4" fill="none" stroke-linecap="round"/>
         </g>
+        <!-- hair accessories layer -->
+        <g id="hair-acc-group"></g>
 
-        <!-- HAIR ACCESSORY (bow, tiara, etc) — set by JS -->
-        <g id="hair-acc"></g>
-
-        <!-- CHARACTER DIRT -->
-        <g id="char-dirt">
-          <ellipse class="char-dirt" id="cd1" cx="55"  cy="95" rx="12" ry="8"  fill="#6D4C41" opacity=".55"/>
-          <ellipse class="char-dirt" id="cd2" cx="100" cy="70" rx="9"  ry="6"  fill="#6D4C41" opacity=".5"/>
-          <circle  class="char-dirt" id="cd3" cx="75"  cy="160" r="10" fill="#6D4C41" opacity=".45"/>
-          <ellipse class="char-dirt" id="cd4" cx="115" cy="155" rx="8" ry="5"  fill="#6D4C41" opacity=".4"/>
-          <ellipse class="char-dirt" id="cd5" cx="40"  cy="180" rx="7" ry="4"  fill="#8D6E63" opacity=".4"/>
-          <ellipse class="char-dirt" id="cd6" cx="120" cy="220" rx="9" ry="5"  fill="#6D4C41" opacity=".45"/>
-          <!-- face grime -->
-          <ellipse class="char-dirt" id="cd7" cx="70" cy="100" rx="7" ry="5" fill="#8D6E63" opacity=".4"/>
-          <circle  class="char-dirt" id="cd8" cx="95" cy="88"  r="5"          fill="#8D6E63" opacity=".35"/>
-        </g>
-
-        <!-- TOWEL (shown during bath phase) -->
-        <g id="towel" opacity="0">
-          <rect x="20" y="118" width="120" height="18" rx="9" fill="#80CBC4"/>
-          <rect x="60" y="105" width="40" height="20" rx="8" fill="#80CBC4"/>
+        <!-- ── CROWN (hidden until final) ── -->
+        <g id="crown" opacity="0">
+          <path d="M68,30 L75,10 L88,22 L100,5 L112,22 L125,10 L132,30Z" fill="#FFD700"/>
+          <path d="M68,30 L132,30 L128,38 L72,38Z" fill="#FFA000"/>
+          <circle cx="100" cy="10" r="5" fill="#E91E63"/>
+          <circle cx="75"  cy="14" r="3" fill="#4FC3F7"/>
+          <circle cx="125" cy="14" r="3" fill="#4FC3F7"/>
+          <path d="M68,30 L132,30" stroke="#FFA000" stroke-width="2"/>
         </g>
 
       </svg>
+
+      <!-- DIRT CANVAS overlaid on princess -->
+      <canvas id="dirt-canvas"></canvas>
     </div>
 
   </div><!-- /scene -->
 
-  <!-- PHASE PANEL -->
-  <div id="phase-panel">
-    <div id="phase-title">🛁</div>
-    <div id="action-grid"></div>
-    <button id="next-btn" onclick="nextPhase()">➡️</button>
+  <!-- PANEL -->
+  <div id="panel">
+    <div id="phase-label">🛁 ✨ 🛁</div>
+    <div id="bath-hint" style="display:none"></div>
+    <div id="action-row"></div>
+    <div id="custom-tray" style="display:none"></div>
+    <button id="next-btn" onclick="nextPhase()">✨ →</button>
   </div>
 
-</div><!-- /app -->
+</div>
 
 <!-- CELEBRATION -->
 <div id="celebration">
-  <div id="celeb-char">✨</div>
+  <div id="celeb-wrap">
+    <div id="celeb-glow"></div>
+    <svg id="celeb-princess" viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+      <!-- simplified clean princess for celebration — cloned by JS -->
+    </svg>
+  </div>
+  <div id="celeb-title">✨ Princesa ✨</div>
   <div id="celeb-stars">⭐⭐⭐⭐⭐</div>
-  <button id="play-again" onclick="resetGame()">🔄</button>
+  <button id="play-again" onclick="resetGame()">🔄 Jogar outra vez</button>
 </div>
-
 <div id="flash"></div>
 
 <script>
-// ══════════════════════════════════════════════════════════
-// STATE
-// ══════════════════════════════════════════════════════════
-const TOTAL_STARS = 10;
-let stars = 0;
-let phase = 0; // 0=bath 1=hair 2=clothes 3=house 4=done
+// ══════════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════════
+const TOTAL_STARS = 12;
+let starsLit = 0;
+let currentPhase = 0; // 0=bath 1=hair 2=dress 3=room 4=done
 
-// Tracking what's been done in each phase
-const done = { bath:0, hair:false, clothes:false, house:0 };
+// ── background stars
+(function(){
+  const bg = document.getElementById('stars-bg');
+  for(let i=0;i<80;i++){
+    const s=document.createElement('div');
+    s.className='star-dot';
+    const sz=1+Math.random()*3;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;
+      animation-duration:${2+Math.random()*4}s;animation-delay:${Math.random()*4}s;`;
+    bg.appendChild(s);
+  }
+})();
 
-// Hair styles: [svgContent, accessoryContent, label-emoji]
-const HAIR_STYLES = [
-  {
-    id:'ponytail',
-    base: `<ellipse cx="80" cy="68" rx="52" ry="36" fill="#5D4037"/>
-           <ellipse cx="80" cy="45" rx="44" ry="28" fill="#5D4037"/>`,
-    extra:`<ellipse cx="80" cy="32" rx="10" ry="20" fill="#5D4037"/>
-           <ellipse cx="80" cy="52" rx="8" ry="8" fill="#795548"/>`,
-    acc:  `<ellipse cx="80" cy="30" rx="14" ry="8" fill="#F06292"/>
-           <circle cx="80" cy="30" r="5" fill="#E91E63"/>`,
-    messy:'',
-    emoji:'🎀'
-  },
-  {
-    id:'curls',
-    base: `<ellipse cx="80" cy="68" rx="52" ry="38" fill="#5D4037"/>`,
-    extra:`<path d="M30,60 Q18,42 32,30 Q46,42 30,60Z M130,60 Q142,42 128,30 Q114,42 130,60Z
-                   M55,32 Q50,10 68,18 Q65,35 55,32Z M105,32 Q110,10 92,18 Q95,35 105,32Z
-                   M80,28 Q72,8 90,12 Q88,30 80,28Z" fill="#4E342E"/>`,
-    acc:  `<circle cx="50" cy="58" r="7" fill="#CE93D8"/>
-           <circle cx="110" cy="58" r="7" fill="#CE93D8"/>`,
-    messy:'',
-    emoji:'🌀'
-  },
-  {
-    id:'buns',
-    base: `<ellipse cx="80" cy="75" rx="48" ry="32" fill="#5D4037"/>`,
-    extra:`<circle cx="45" cy="45" r="22" fill="#5D4037"/>
-           <circle cx="115" cy="45" r="22" fill="#5D4037"/>`,
-    acc:  `<circle cx="45" cy="45" r="10" fill="#FFD740" opacity=".7"/>
-           <circle cx="115" cy="45" r="10" fill="#FFD740" opacity=".7"/>`,
-    messy:'',
-    emoji:'🌟'
-  },
-  {
-    id:'straight',
-    base: `<ellipse cx="80" cy="65" rx="52" ry="36" fill="#5D4037"/>
-           <rect x="28" y="65" width="20" height="55" rx="10" fill="#5D4037"/>
-           <rect x="112" y="65" width="20" height="55" rx="10" fill="#5D4037"/>`,
-    extra:`<rect x="38" y="30" width="84" height="16" rx="8" fill="#4E342E"/>`,
-    acc:  `<rect x="55" y="35" width="50" height="10" rx="5" fill="#4FC3F7"/>
-           <circle cx="55" cy="40" r="6" fill="#0288D1"/>
-           <circle cx="105" cy="40" r="6" fill="#0288D1"/>`,
-    messy:'',
-    emoji:'💧'
-  },
-];
-
-// Clothes: [torso color, shoe color, emoji]
-const CLOTHES = [
-  { torso:'#EF9A9A', shoe:'#757575', emoji:'❤️' },
-  { torso:'#80CBC4', shoe:'#4CAF50', emoji:'💚' },
-  { torso:'#CE93D8', shoe:'#9C27B0', emoji:'💜' },
-  { torso:'#FFD54F', shoe:'#FF9800', emoji:'⭐' },
-  { torso:'#80DEEA', shoe:'#00BCD4', emoji:'💙' },
-  { torso:'#FFAB91', shoe:'#FF5722', emoji:'🧡' },
-];
-
-let selectedHair    = null;
-let selectedClothes = null;
-
-// ══════════════════════════════════════════════════════════
-// STAR PROGRESS
-// ══════════════════════════════════════════════════════════
-function buildStars() {
-  const track = document.getElementById('star-track');
-  track.innerHTML = '';
-  for (let i = 0; i < TOTAL_STARS; i++) {
-    const s = document.createElement('span');
-    s.className = 'star';
-    s.id = `star${i}`;
-    s.textContent = '⭐';
-    track.appendChild(s);
+// ── star track
+function buildStars(){
+  const t=document.getElementById('star-track');
+  t.innerHTML='';
+  for(let i=0;i<TOTAL_STARS;i++){
+    const s=document.createElement('span');
+    s.className='star-pip'; s.id=`sp${i}`; s.textContent='⭐';
+    t.appendChild(s);
   }
 }
 
-function addStar(n = 1) {
-  for (let i = 0; i < n; i++) {
-    if (stars >= TOTAL_STARS) break;
-    const el = document.getElementById(`star${stars}`);
-    el.classList.add('lit', 'pop');
-    setTimeout(() => el.classList.remove('pop'), 400);
-    stars++;
-  }
-  checkComplete();
-}
-
-function checkComplete() {
-  if (stars >= TOTAL_STARS && phase === 3) {
-    setTimeout(celebrate, 600);
+function addStars(n){
+  for(let i=0;i<n;i++){
+    if(starsLit>=TOTAL_STARS) break;
+    const el=document.getElementById(`sp${starsLit}`);
+    el.classList.add('lit','pop');
+    setTimeout(()=>el.classList.remove('pop'),400);
+    starsLit++;
   }
 }
 
-// ══════════════════════════════════════════════════════════
-// PHASES
-// ══════════════════════════════════════════════════════════
-const PHASES = [
-  { title: '🛁', render: renderBathPhase },
-  { title: '💇', render: renderHairPhase },
-  { title: '👗', render: renderClothesPhase },
-  { title: '🏠', render: renderHousePhase },
-];
-
-function renderPhase() {
-  document.getElementById('phase-title').textContent = PHASES[phase].title;
-  document.getElementById('next-btn').classList.remove('show');
-  PHASES[phase].render();
+// ── phase indicators
+const PHASE_ICONS=['🛁','💇','👗','🏠'];
+function buildPhaseIndicator(){
+  const el=document.getElementById('phase-indicator');
+  el.innerHTML=PHASE_ICONS.map((ic,i)=>`<span class="phase-dot ${i===currentPhase?'active':''}" id="pd${i}">${ic}</span>`).join('');
 }
-
-function nextPhase() {
-  flash();
-  setTimeout(() => {
-    phase++;
-    if (phase < PHASES.length) renderPhase();
-  }, 200);
-}
-
-function flash() {
-  const el = document.getElementById('flash');
-  el.classList.add('on');
-  setTimeout(() => el.classList.remove('on'), 200);
-}
-
-// ──── PHASE 0: BATH ───────────────────────────────────────
-const BATH_STEPS = ['🚿','🧼','🪥','🧽'];
-let bathDone = [false, false, false, false];
-
-function renderBathPhase() {
-  const grid = document.getElementById('action-grid');
-  grid.innerHTML = BATH_STEPS.map((e, i) => `
-    <button class="action-btn ${bathDone[i]?'done':''}" id="bath${i}" onclick="doBath(${i})">
-      ${e}
-      ${bathDone[i] ? '<span class="check">✓</span>' : ''}
-    </button>`).join('');
-}
-
-function doBath(i) {
-  if (bathDone[i]) return;
-  bathDone[i] = true;
-
-  // remove one dirt patch per step
-  const dirtIds = ['cd1','cd2','cd3,cd4','cd5,cd6','cd7','cd8'];
-  const toClean = [['cd1','cd2'],['cd3','cd4'],['cd5','cd6'],['cd7','cd8']];
-  toClean[i].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.opacity = '0';
+function updatePhaseIndicator(){
+  PHASE_ICONS.forEach((_,i)=>{
+    const el=document.getElementById(`pd${i}`);
+    if(el) el.className='phase-dot'+(i<=currentPhase?' active':'');
   });
+}
 
-  // show towel on last step
-  if (bathDone.every(Boolean)) {
-    document.getElementById('towel').style.opacity = '1';
-    setTimeout(() => document.getElementById('towel').style.opacity = '0', 1200);
-    setFaceHappy(true);
+// ══════════════════════════════════════════════════════════════════
+// DIRT CANVAS — erase with finger
+// ══════════════════════════════════════════════════════════════════
+let dirtCtx, dirtCanvas, dirtActive=false, lastDX=0, lastDY=0;
+let dirtCleaned=0; // 0–100 %
+let bathPhaseComplete=false;
+
+function setupDirtCanvas(){
+  dirtCanvas=document.getElementById('dirt-canvas');
+  const wrap=document.getElementById('princess-wrap');
+  // match canvas px to display px for crisp rendering
+  const r=wrap.getBoundingClientRect();
+  dirtCanvas.width=r.width*2;
+  dirtCanvas.height=r.height*2;
+  dirtCanvas.style.width=r.width+'px';
+  dirtCanvas.style.height=r.height+'px';
+
+  dirtCtx=dirtCanvas.getContext('2d');
+  drawDirt();
+  updateDirtInteraction(false);
+}
+
+function drawDirt(){
+  const W=dirtCanvas.width, H=dirtCanvas.height;
+  dirtCtx.clearRect(0,0,W,H);
+  dirtCtx.save();
+
+  // big irregular splodges
+  const blobs=[
+    {x:.3,y:.3,rx:.18,ry:.14,c:'rgba(80,50,20,.65)'},
+    {x:.65,y:.22,rx:.14,ry:.10,c:'rgba(70,45,15,.6)'},
+    {x:.5,y:.55,rx:.20,ry:.13,c:'rgba(90,55,20,.6)'},
+    {x:.2,y:.65,rx:.12,ry:.09,c:'rgba(75,48,18,.55)'},
+    {x:.75,y:.58,rx:.15,ry:.10,c:'rgba(80,52,20,.58)'},
+    {x:.45,y:.78,rx:.16,ry:.08,c:'rgba(70,45,16,.5)'},
+    {x:.15,y:.42,rx:.10,ry:.08,c:'rgba(85,54,22,.52)'},
+    {x:.82,y:.38,rx:.10,ry:.08,c:'rgba(78,50,19,.5)'},
+  ];
+  blobs.forEach(b=>{
+    dirtCtx.beginPath();
+    dirtCtx.ellipse(b.x*W, b.y*H, b.rx*W, b.ry*H, Math.random()*.5, 0, Math.PI*2);
+    dirtCtx.fillStyle=b.c;
+    dirtCtx.fill();
+  });
+  // small dots
+  for(let i=0;i<30;i++){
+    dirtCtx.beginPath();
+    dirtCtx.arc(Math.random()*W, Math.random()*H, 3+Math.random()*8, 0, Math.PI*2);
+    dirtCtx.fillStyle=`rgba(${60+Math.random()*30},${35+Math.random()*20},${10+Math.random()*10},.45)`;
+    dirtCtx.fill();
   }
-
-  // bubbles animation
-  spawnBubbles();
-  addStar(bathDone.filter(Boolean).length === 1 ? 1 : bathDone.every(Boolean) ? 2 : 1);
-  renderBathPhase();
-  checkBathPhase();
+  dirtCtx.restore();
+  dirtCleaned=0;
+  bathPhaseComplete=false;
 }
 
-function checkBathPhase() {
-  if (bathDone.every(Boolean)) {
-    setTimeout(() => document.getElementById('next-btn').classList.add('show'), 400);
+function updateDirtInteraction(enabled){
+  const canvas=dirtCanvas;
+  if(enabled){
+    canvas.style.pointerEvents='auto';
+  } else {
+    canvas.style.pointerEvents='none';
   }
 }
 
-function spawnBubbles() {
-  const scene = document.getElementById('scene');
-  const charWrap = document.getElementById('char-wrap');
-  const rect = charWrap.getBoundingClientRect();
-  const sceneRect = scene.getBoundingClientRect();
-  for (let i = 0; i < 8; i++) {
-    const b = document.createElement('div');
-    b.className = 'bubble';
-    const size = 12 + Math.random() * 20;
-    b.style.width  = size + 'px';
-    b.style.height = size + 'px';
-    b.style.left = (rect.left - sceneRect.left + Math.random() * rect.width) + 'px';
-    b.style.top  = (rect.top  - sceneRect.top  + Math.random() * rect.height * .5 + rect.height * .3) + 'px';
-    b.style.animationDuration = (.8 + Math.random() * .8) + 's';
-    b.style.animationDelay   = (Math.random() * .4) + 's';
-    scene.appendChild(b);
-    setTimeout(() => b.remove(), 2000);
+function getDirtPos(e){
+  const rect=dirtCanvas.getBoundingClientRect();
+  const scaleX=dirtCanvas.width/rect.width;
+  const scaleY=dirtCanvas.height/rect.height;
+  const src=e.touches?e.touches[0]:e;
+  return [(src.clientX-rect.left)*scaleX, (src.clientY-rect.top)*scaleY];
+}
+
+function eraseDirt(x,y){
+  dirtCtx.save();
+  dirtCtx.globalCompositeOperation='destination-out';
+  // big soft eraser
+  const grad=dirtCtx.createRadialGradient(x,y,0,x,y,60);
+  grad.addColorStop(0,'rgba(0,0,0,1)');
+  grad.addColorStop(.6,'rgba(0,0,0,.8)');
+  grad.addColorStop(1,'rgba(0,0,0,0)');
+  dirtCtx.fillStyle=grad;
+  dirtCtx.beginPath();
+  dirtCtx.arc(x,y,60,0,Math.PI*2);
+  dirtCtx.fill();
+  dirtCtx.restore();
+  spawnBubbleAt(x,y);
+  checkDirtProgress();
+}
+
+function checkDirtProgress(){
+  // sample pixels to see how much dirt remains
+  const data=dirtCtx.getImageData(0,0,dirtCanvas.width,dirtCanvas.height).data;
+  let nonZero=0;
+  for(let i=3;i<data.length;i+=16) if(data[i]>20) nonZero++;
+  const total=data.length/64;
+  const pct=1-(nonZero/total);
+  dirtCleaned=Math.min(100,pct*100);
+
+  if(dirtCleaned>70 && !bathPhaseComplete){
+    bathPhaseComplete=true;
+    onBathComplete();
   }
 }
 
-// ──── PHASE 1: HAIR ───────────────────────────────────────
-function renderHairPhase() {
-  const grid = document.getElementById('action-grid');
-  grid.innerHTML = HAIR_STYLES.map((h, i) => `
-    <button class="action-btn ${selectedHair===i?'selected':''}" onclick="doHair(${i})">
-      ${h.emoji}
-    </button>`).join('');
+function onBathComplete(){
+  // fade canvas out
+  dirtCanvas.style.transition='opacity .8s';
+  dirtCanvas.style.opacity='0';
+  setFace(true);
+  addStars(3);
+  spawnSparklesAround();
+  setTimeout(()=>{ document.getElementById('next-btn').classList.add('show'); },600);
 }
 
-function doHair(i) {
-  selectedHair = i;
-  const h = HAIR_STYLES[i];
+// touch/mouse events for dirt
+function setupDirtEvents(){
+  const canvas=dirtCanvas;
+  function start(e){
+    e.preventDefault();
+    dirtActive=true;
+    const[x,y]=getDirtPos(e);
+    lastDX=x; lastDY=y;
+    eraseDirt(x,y);
+  }
+  function move(e){
+    e.preventDefault();
+    if(!dirtActive) return;
+    const[x,y]=getDirtPos(e);
+    // interpolate for smooth erasing
+    const dist=Math.hypot(x-lastDX,y-lastDY);
+    const steps=Math.max(1,Math.floor(dist/20));
+    for(let i=1;i<=steps;i++){
+      const ix=lastDX+(x-lastDX)*(i/steps);
+      const iy=lastDY+(y-lastDY)*(i/steps);
+      eraseDirt(ix,iy);
+    }
+    lastDX=x; lastDY=y;
+  }
+  function stop(){ dirtActive=false; }
+  canvas.addEventListener('mousedown',start);
+  canvas.addEventListener('mousemove',move);
+  canvas.addEventListener('mouseup',stop);
+  canvas.addEventListener('touchstart',start,{passive:false});
+  canvas.addEventListener('touchmove',move,{passive:false});
+  canvas.addEventListener('touchend',stop,{passive:false});
+}
 
-  // Update SVG hair
-  document.getElementById('hair-base').setAttribute('d', '');
-  document.querySelector('#char-hair #hair-base').outerHTML;
+// ══════════════════════════════════════════════════════════════════
+// PARTICLES
+// ══════════════════════════════════════════════════════════════════
+function spawnBubbleAt(cx,cy){
+  if(Math.random()>.4) return; // throttle
+  const scene=document.getElementById('scene');
+  const canvas=dirtCanvas;
+  const rect=canvas.getBoundingClientRect();
+  const sceneRect=scene.getBoundingClientRect();
+  const scaleX=rect.width/canvas.width;
+  const scaleY=rect.height/canvas.height;
+  const sx=rect.left-sceneRect.left+cx*scaleX;
+  const sy=rect.top -sceneRect.top +cy*scaleY;
+  const b=document.createElement('div');
+  b.className='bubble';
+  const sz=8+Math.random()*16;
+  b.style.cssText=`width:${sz}px;height:${sz}px;left:${sx-sz/2}px;top:${sy-sz/2}px;
+    animation-duration:${.8+Math.random()*.8}s;animation-delay:${Math.random()*.2}s`;
+  scene.appendChild(b);
+  setTimeout(()=>b.remove(),1800);
+}
 
-  // Rebuild hair group
-  const hairG = document.getElementById('char-hair');
-  hairG.innerHTML = `
-    <g id="hair-inner">
-      ${h.base}
-      ${h.extra}
-    </g>
-  `;
-  hairG.id = 'char-hair';
+function spawnSparklesAround(){
+  const wrap=document.getElementById('princess-wrap');
+  const scene=document.getElementById('scene');
+  const r=wrap.getBoundingClientRect();
+  const sr=scene.getBoundingClientRect();
+  ['✨','⭐','💫','🌟','✨','⭐'].forEach((ic,i)=>{
+    const el=document.createElement('div');
+    el.className='sparkle-el';
+    el.textContent=ic; el.style.fontSize='1.6rem';
+    el.style.left=(r.left-sr.left+20+i*28)+'px';
+    el.style.top =(r.top -sr.top +10+(i%2)*35)+'px';
+    el.style.animationDelay=(i*.08)+'s';
+    scene.appendChild(el);
+    setTimeout(()=>el.remove(),900);
+  });
+}
 
-  // Accessory
-  document.getElementById('hair-acc').innerHTML = h.acc;
+// ══════════════════════════════════════════════════════════════════
+// FACE EXPRESSIONS
+// ══════════════════════════════════════════════════════════════════
+function setFace(happy){
+  const mU=document.getElementById('mouth-upper');
+  const mL=document.getElementById('mouth-lower');
+  const mS=document.getElementById('mouth-smile');
+  const bL=document.getElementById('brow-l');
+  const bR=document.getElementById('brow-r');
+  const cL=document.getElementById('cheek-l');
+  const cR=document.getElementById('cheek-r');
+  if(happy){
+    mS.style.opacity='1';
+    mU.style.opacity='0';
+    mL.style.opacity='0';
+    bL.setAttribute('d','M65,68 Q76,63 85,67');
+    bR.setAttribute('d','M115,67 Q124,63 135,68');
+    cL.style.opacity='.55';
+    cR.style.opacity='.55';
+  } else {
+    mS.style.opacity='0';
+    mU.style.opacity='1';
+    mL.style.opacity='.6';
+    bL.setAttribute('d','M65,65 Q76,60 85,64');
+    bR.setAttribute('d','M115,64 Q124,60 135,65');
+    cL.style.opacity='0';
+    cR.style.opacity='0';
+  }
+}
 
-  // Sparkles
-  spawnSparkles();
+// ══════════════════════════════════════════════════════════════════
+// HAIR STYLES
+// ══════════════════════════════════════════════════════════════════
+const HAIR_STYLES=[
+  { emoji:'🎀', label:'Rabo',
+    html:`<ellipse cx="100" cy="58" rx="56" ry="38" fill="#5D4037"/>
+          <ellipse cx="100" cy="40" rx="48" ry="28" fill="#4E342E"/>
+          <!-- ponytail -->
+          <path d="M100,85 Q130,100 125,140 Q115,155 105,145 Q100,130 100,110Z" fill="#5D4037"/>
+          <path d="M100,85 Q70,100 75,140 Q85,155 95,145 Q100,130 100,110Z" fill="#4E342E" opacity=".6"/>`,
+    acc:`<path d="M78,48 Q88,40 100,46 Q112,40 122,48 Q112,58 100,54 Q88,58 78,48Z" fill="#E91E63"/>
+         <path d="M78,48 Q68,42 72,34 Q82,36 78,48Z" fill="#E91E63"/>
+         <path d="M122,48 Q132,42 128,34 Q118,36 122,48Z" fill="#E91E63"/>
+         <circle cx="100" cy="47" r="6" fill="#FF80AB"/>` },
+  { emoji:'👑', label:'Coque',
+    html:`<ellipse cx="100" cy="62" rx="52" ry="34" fill="#5D4037"/>
+          <!-- bun on top -->
+          <circle cx="100" cy="28" r="28" fill="#5D4037"/>
+          <circle cx="100" cy="28" r="20" fill="#4E342E"/>
+          <!-- side strands -->
+          <path d="M50,65 Q40,90 48,115" stroke="#4E342E" stroke-width="10" fill="none" stroke-linecap="round"/>
+          <path d="M150,65 Q160,90 152,115" stroke="#4E342E" stroke-width="10" fill="none" stroke-linecap="round"/>`,
+    acc:`<path d="M75,12 L82,0 L90,10 L100,0 L110,10 L118,0 L125,12Z" fill="#FFD700"/>
+         <rect x="75" y="12" width="50" height="10" rx="4" fill="#FFA000"/>
+         <circle cx="100" cy="2" r="5" fill="#E91E63"/>
+         <circle cx="82"  cy="4" r="3" fill="#4FC3F7"/>
+         <circle cx="118" cy="4" r="3" fill="#4FC3F7"/>` },
+  { emoji:'🌸', label:'Tranças',
+    html:`<ellipse cx="100" cy="55" rx="55" ry="40" fill="#5D4037"/>
+          <!-- left braid -->
+          <path d="M50,70 Q38,100 42,145" stroke="#5D4037" stroke-width="14" fill="none" stroke-linecap="round"/>
+          <path d="M50,70 Q36,98 40,143" stroke="#4E342E" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="8 6"/>
+          <!-- right braid -->
+          <path d="M150,70 Q162,100 158,145" stroke="#5D4037" stroke-width="14" fill="none" stroke-linecap="round"/>
+          <path d="M150,70 Q164,98 160,143" stroke="#4E342E" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="8 6"/>`,
+    acc:`<circle cx="50"  cy="72"  r="9" fill="#F48FB1"/>
+         <circle cx="50"  cy="72"  r="5" fill="#E91E63"/>
+         <circle cx="150" cy="72"  r="9" fill="#F48FB1"/>
+         <circle cx="150" cy="72"  r="5" fill="#E91E63"/>
+         <!-- flower on top -->
+         <circle cx="100" cy="22" r="8" fill="#F48FB1"/>
+         <circle cx="90"  cy="28" r="7" fill="#F48FB1"/>
+         <circle cx="110" cy="28" r="7" fill="#F48FB1"/>
+         <circle cx="100" cy="32" r="7" fill="#F48FB1"/>
+         <circle cx="100" cy="26" r="6" fill="#FFD700"/>` },
+  { emoji:'💜', label:'Solto',
+    html:`<ellipse cx="100" cy="55" rx="58" ry="42" fill="#5D4037"/>
+          <!-- long flowing sides -->
+          <path d="M48,70 Q32,110 38,170 Q44,180 52,170 Q48,120 58,85Z" fill="#5D4037"/>
+          <path d="M152,70 Q168,110 162,170 Q156,180 148,170 Q152,120 142,85Z" fill="#5D4037"/>
+          <!-- back flow -->
+          <path d="M62,80 Q50,130 54,175 Q70,185 80,175 Q72,130 78,90Z" fill="#4E342E" opacity=".7"/>
+          <path d="M138,80 Q150,130 146,175 Q130,185 120,175 Q128,130 122,90Z" fill="#4E342E" opacity=".7"/>`,
+    acc:`<path d="M60,42 Q100,35 140,42 Q130,50 100,48 Q70,50 60,42Z" fill="#CE93D8" opacity=".8"/>
+         <circle cx="100" cy="30" r="5" fill="#CE93D8"/>
+         <circle cx="82"  cy="34" r="3" fill="#CE93D8"/>
+         <circle cx="118" cy="34" r="3" fill="#CE93D8"/>` },
+];
 
-  if (!done.hair) { done.hair = true; addStar(2); }
+let selHair=-1;
+function renderHairPhase(){
+  document.getElementById('phase-label').textContent='💇';
+  document.getElementById('action-row').innerHTML='';
+  const tray=document.getElementById('custom-tray');
+  tray.style.display='flex';
+  tray.innerHTML=HAIR_STYLES.map((h,i)=>`
+    <div class="ctile ${selHair===i?'selected':''}" onclick="applyHair(${i})">${h.emoji}</div>
+  `).join('');
+  updateDirtInteraction(false);
+}
+let hairDoneOnce=false;
+function applyHair(i){
+  selHair=i;
+  const h=HAIR_STYLES[i];
+  document.getElementById('hair-group').innerHTML=h.html;
+  document.getElementById('hair-acc-group').innerHTML=h.acc;
+  spawnSparklesAround();
+  if(!hairDoneOnce){ hairDoneOnce=true; addStars(3); }
   renderHairPhase();
   document.getElementById('next-btn').classList.add('show');
 }
 
-function spawnSparkles() {
-  const scene = document.getElementById('scene');
-  const charWrap = document.getElementById('char-wrap');
-  const rect = charWrap.getBoundingClientRect();
-  const sceneRect = scene.getBoundingClientRect();
-  ['✨','⭐','💫','🌟'].forEach((s, idx) => {
-    const el = document.createElement('div');
-    el.className = 'sparkle';
-    el.textContent = s;
-    el.style.left = (rect.left - sceneRect.left + 20 + idx * 35) + 'px';
-    el.style.top  = (rect.top  - sceneRect.top  + 10 + (idx%2)*30) + 'px';
-    el.style.animationDelay = (idx * .1) + 's';
-    scene.appendChild(el);
-    setTimeout(() => el.remove(), 800);
-  });
+// ══════════════════════════════════════════════════════════════════
+// DRESS / COLOURS
+// ══════════════════════════════════════════════════════════════════
+const DRESSES=[
+  { emoji:'💗', c1:'#F48FB1', c2:'#C2185B', shoe:'#7B1FA2', gem:'#E91E63' },
+  { emoji:'💙', c1:'#81D4FA', c2:'#0277BD', shoe:'#1A237E', gem:'#4FC3F7' },
+  { emoji:'💚', c1:'#A5D6A7', c2:'#2E7D32', shoe:'#1B5E20', gem:'#66BB6A' },
+  { emoji:'💜', c1:'#CE93D8', c2:'#6A1B9A', shoe:'#4A148C', gem:'#AB47BC' },
+  { emoji:'🧡', c1:'#FFCC80', c2:'#E65100', shoe:'#BF360C', gem:'#FF9800' },
+  { emoji:'❤️', c1:'#EF9A9A', c2:'#B71C1C', shoe:'#7F0000', gem:'#EF5350' },
+];
+let selDress=-1;
+function renderDressPhase(){
+  document.getElementById('phase-label').textContent='👗';
+  document.getElementById('action-row').innerHTML='';
+  const tray=document.getElementById('custom-tray');
+  tray.style.display='flex';
+  tray.innerHTML=DRESSES.map((d,i)=>`
+    <div class="ctile ${selDress===i?'selected':''}" onclick="applyDress(${i})">${d.emoji}</div>
+  `).join('');
 }
-
-// ──── PHASE 2: CLOTHES ────────────────────────────────────
-function renderClothesPhase() {
-  const grid = document.getElementById('action-grid');
-  grid.innerHTML = CLOTHES.map((c, i) => `
-    <button class="action-btn ${selectedClothes===i?'selected':''}" onclick="doClothes(${i})">
-      ${c.emoji}
-    </button>`).join('');
-}
-
-function doClothes(i) {
-  selectedClothes = i;
-  const c = CLOTHES[i];
-
-  // Recolour torso + arms
-  document.getElementById('torso').setAttribute('fill', c.torso);
-  // Arms slightly darker version
-  document.getElementById('arm-l').setAttribute('fill', c.torso);
-  document.getElementById('arm-r').setAttribute('fill', c.torso);
-  // Shoes
-  document.getElementById('shoe-l').setAttribute('fill', c.shoe);
-  document.getElementById('shoe-r').setAttribute('fill', c.shoe);
-
-  spawnSparkles();
-
-  if (!done.clothes) { done.clothes = true; addStar(2); }
-  renderClothesPhase();
+let dressDoneOnce=false;
+function applyDress(i){
+  selDress=i;
+  const d=DRESSES[i];
+  document.getElementById('dg1').setAttribute('stop-color',d.c1);
+  document.getElementById('dg2').setAttribute('stop-color',d.c2);
+  document.getElementById('shoe-l')||0;
+  // shoes: find ellipses by updating shoe fill via JS
+  document.querySelectorAll('[id^="shoe"]').forEach(el=>el.setAttribute('fill',d.shoe));
+  // earring gems
+  document.getElementById('earring-gem-l').setAttribute('fill',d.gem);
+  document.getElementById('earring-gem-r').setAttribute('fill',d.gem);
+  document.getElementById('necklace-gem').setAttribute('fill',d.gem);
+  spawnSparklesAround();
+  if(!dressDoneOnce){ dressDoneOnce=true; addStars(3); }
+  renderDressPhase();
   document.getElementById('next-btn').classList.add('show');
 }
 
-// ──── PHASE 3: HOUSE ──────────────────────────────────────
-const HOUSE_STEPS = [
-  { emoji:'🪟', ids:['hd1','hd2'] },   // clean window
-  { emoji:'🧹', ids:['hd5','hd6','hd7','hd8'] }, // sweep floor
-  { emoji:'🧺', ids:['sock'] },         // pick up sock → hide
-  { emoji:'🧸', ids:['toy-block'] },    // tidy toys → hide
-  { emoji:'🖼️', ids:['hd3','hd4'] },   // clean wall
+// ══════════════════════════════════════════════════════════════════
+// ROOM CLEANING
+// ══════════════════════════════════════════════════════════════════
+const ROOM_TASKS=[
+  { emoji:'🧹', label:'', targets:['dust1','dust2','floor-puddle'] },
+  { emoji:'🧺', label:'', targets:['floor-sock','floor-clip'] },
+  { emoji:'🌟', label:'', targets:['floor-star'] },
 ];
-let houseDone = HOUSE_STEPS.map(() => false);
-
-function renderHousePhase() {
-  const grid = document.getElementById('action-grid');
-  grid.innerHTML = HOUSE_STEPS.map((s, i) => `
-    <button class="action-btn ${houseDone[i]?'done':''}" id="house${i}" onclick="doHouse(${i})">
-      ${s.emoji}
-      ${houseDone[i] ? '<span class="check">✓</span>' : ''}
-    </button>`).join('');
+let roomDone=[false,false,false];
+function renderRoomPhase(){
+  document.getElementById('phase-label').textContent='🏠';
+  document.getElementById('custom-tray').style.display='none';
+  const row=document.getElementById('action-row');
+  row.innerHTML=ROOM_TASKS.map((t,i)=>`
+    <button class="abtn ${roomDone[i]?'done':''}" onclick="doRoom(${i})">
+      ${t.emoji}
+      ${roomDone[i]?'<span class="tick">✓</span>':''}
+    </button>
+  `).join('');
+}
+let roomStarsGiven=false;
+function doRoom(i){
+  if(roomDone[i]) return;
+  roomDone[i]=true;
+  ROOM_TASKS[i].targets.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){ el.style.transition='opacity .6s'; el.style.opacity='0'; }
+  });
+  spawnSparklesAround();
+  renderRoomPhase();
+  if(roomDone.every(Boolean)){
+    if(!roomStarsGiven){ roomStarsGiven=true; addStars(3); }
+    // show crown!
+    const crown=document.getElementById('crown');
+    crown.style.transition='opacity .8s'; crown.style.opacity='1';
+    setTimeout(()=>{ document.getElementById('next-btn').onclick=celebrate; document.getElementById('next-btn').classList.add('show'); },600);
+  }
 }
 
-function doHouse(i) {
-  if (houseDone[i]) return;
-  houseDone[i] = true;
-  const step = HOUSE_STEPS[i];
+// ══════════════════════════════════════════════════════════════════
+// PHASE FLOW
+// ══════════════════════════════════════════════════════════════════
+const PHASE_RENDERS=[
+  renderBathPhase, renderHairPhase, renderDressPhase, renderRoomPhase
+];
 
-  step.ids.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.style.transition = 'opacity .5s';
-      el.style.opacity = '0';
+function renderBathPhase(){
+  document.getElementById('phase-label').textContent='🛁';
+  document.getElementById('action-row').innerHTML='';
+  document.getElementById('custom-tray').style.display='none';
+  const hint=document.getElementById('bath-hint');
+  hint.style.display='block';
+  hint.textContent='👆 Esfrega com o dedo!';
+  updateDirtInteraction(true);
+}
+
+function nextPhase(){
+  flash();
+  setTimeout(()=>{
+    currentPhase++;
+    document.getElementById('next-btn').classList.remove('show');
+    document.getElementById('next-btn').onclick=nextPhase;
+    if(currentPhase<PHASE_RENDERS.length){
+      updatePhaseIndicator();
+      PHASE_RENDERS[currentPhase]();
+      // hide bath hint in later phases
+      if(currentPhase>0) document.getElementById('bath-hint').style.display='none';
     }
-  });
-
-  // sparkle on scene
-  const scene = document.getElementById('scene');
-  const sceneRect = scene.getBoundingClientRect();
-  ['✨','🌟'].forEach((s, idx) => {
-    const el = document.createElement('div');
-    el.className = 'sparkle';
-    el.textContent = s;
-    el.style.left = (50 + Math.random() * (sceneRect.width - 100)) + 'px';
-    el.style.top  = (50 + Math.random() * (sceneRect.height - 100)) + 'px';
-    el.style.animationDelay = (idx * .15) + 's';
-    scene.appendChild(el);
-    setTimeout(() => el.remove(), 800);
-  });
-
-  addStar(1);
-  renderHousePhase();
-
-  if (houseDone.every(Boolean)) {
-    setTimeout(() => {
-      document.getElementById('next-btn').classList.add('show');
-      // trick: next-btn will trigger celebration
-      document.getElementById('next-btn').onclick = celebrate;
-    }, 400);
-  }
+  },220);
 }
 
-// ──── HAPPY FACE ──────────────────────────────────────────
-function setFaceHappy(happy) {
-  const mouth = document.getElementById('mouth');
-  const browL  = document.getElementById('brow-l');
-  const browR  = document.getElementById('brow-r');
-  const cheekL = document.getElementById('cheek-l');
-  const cheekR = document.getElementById('cheek-r');
-
-  if (happy) {
-    mouth.setAttribute('d', 'M65,105 Q80,118 95,105');
-    browL.setAttribute('d', 'M54,70 Q63,66 70,70');
-    browR.setAttribute('d', 'M90,70 Q97,66 106,70');
-    cheekL.style.opacity = '.45';
-    cheekR.style.opacity = '.45';
-  } else {
-    mouth.setAttribute('d', 'M65,108 Q80,102 95,108');
-    browL.setAttribute('d', 'M54,68 Q63,65 70,68');
-    browR.setAttribute('d', 'M90,68 Q97,65 106,68');
-    cheekL.style.opacity = '0';
-    cheekR.style.opacity = '0';
-  }
+function flash(){
+  const el=document.getElementById('flash');
+  el.classList.add('on');
+  setTimeout(()=>el.classList.remove('on'),220);
 }
 
-// ══════════════════════════════════════════════════════════
-// CELEBRATION
-// ══════════════════════════════════════════════════════════
-function celebrate() {
-  // Make character fully happy
-  setFaceHappy(true);
-  document.getElementById('celebration').classList.add('show');
-  launchConfetti();
-
-  // Pick a fun emoji for the character
-  const celebEmojis = ['🧒','👧','🌟','😊'];
-  document.getElementById('celeb-char').textContent = '✨👧✨';
+// ══════════════════════════════════════════════════════════════════
+// CELEBRATE
+// ══════════════════════════════════════════════════════════════════
+function celebrate(){
+  flash();
+  setTimeout(()=>{
+    // clone princess SVG into celebration
+    const src=document.getElementById('princess-svg');
+    document.getElementById('celeb-princess').innerHTML=src.innerHTML;
+    document.getElementById('celebration').classList.add('show');
+    launchConfetti();
+    addStars(TOTAL_STARS-starsLit); // fill any remaining
+  },220);
 }
 
-function launchConfetti() {
-  const cols = ['#FF5757','#FFB800','#4CAF50','#2196F3','#F48FB1','#CE93D8','#FFD740'];
-  for (let i = 0; i < 60; i++) {
-    const el = document.createElement('div');
-    el.className = 'confetti-piece';
-    el.style.left = Math.random() * 100 + 'vw';
-    el.style.background = cols[Math.floor(Math.random() * cols.length)];
-    el.style.animationDuration = (1.5 + Math.random() * 2) + 's';
-    el.style.animationDelay    = (Math.random() * .8) + 's';
+function launchConfetti(){
+  const cols=['#F48FB1','#FFD700','#C77DFF','#80DEEA','#fff','#E91E63','#4FC3F7'];
+  for(let i=0;i<70;i++){
+    const el=document.createElement('div');
+    el.className='cpiece';
+    const sz=8+Math.random()*14;
+    el.style.cssText=`width:${sz}px;height:${sz}px;border-radius:${Math.random()>.5?'50%':'2px'};
+      left:${Math.random()*100}vw;background:${cols[Math.floor(Math.random()*cols.length)]};
+      animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*.8}s;`;
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 4000);
+    setTimeout(()=>el.remove(),4000);
   }
 }
 
-// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
 // RESET
-// ══════════════════════════════════════════════════════════
-function resetGame() {
-  // hide celebration
+// ══════════════════════════════════════════════════════════════════
+function resetGame(){
   document.getElementById('celebration').classList.remove('show');
-
-  // reset state
-  stars = 0; phase = 0;
-  bathDone    = [false,false,false,false];
-  houseDone   = HOUSE_STEPS.map(() => false);
-  done.hair   = false;
-  done.clothes = false;
-  selectedHair = null;
-  selectedClothes = null;
+  currentPhase=0; starsLit=0;
+  selHair=-1; selDress=-1;
+  hairDoneOnce=false; dressDoneOnce=false;
+  roomDone=[false,false,false]; roomStarsGiven=false;
 
   // reset stars
-  document.querySelectorAll('.star').forEach(s => s.classList.remove('lit','pop'));
-
-  // reset dirt
-  document.querySelectorAll('.char-dirt, .hdirt').forEach(el => el.style.opacity = '');
-  ['sock','toy-block'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.opacity = '';
-  });
+  document.querySelectorAll('.star-pip').forEach(s=>s.classList.remove('lit','pop'));
 
   // reset face
-  setFaceHappy(false);
+  setFace(false);
 
-  // reset hair
-  document.getElementById('char-hair').innerHTML = `
-    <ellipse id="hair-base" cx="80" cy="68" rx="52" ry="38" fill="#5D4037"/>
-    <path id="hair-extra" d="M30,55 Q20,30 45,25 Q55,50 30,55Z M130,55 Q140,30 115,25 Q105,50 130,55Z M80,35 Q70,10 95,15 Q90,40 80,35Z" fill="#5D4037"/>
-    <path id="hair-messy" d="M28,70 Q15,50 30,35 M132,70 Q145,50 130,35 M60,33 Q50,10 70,18 M100,33 Q110,10 90,18" stroke="#5D4037" stroke-width="5" fill="none" stroke-linecap="round" opacity="1"/>
+  // reset hair to messy
+  document.getElementById('hair-group').innerHTML=`
+    <ellipse id="hb1" cx="100" cy="55" rx="56" ry="42" fill="#5D4037"/>
+    <path id="hb2" d="M46,60 Q30,30 55,18 Q68,45 46,60Z M154,60 Q170,30 145,18 Q132,45 154,60Z" fill="#5D4037"/>
+    <path id="hb3" d="M100,28 Q88,5 108,10 Q105,32 100,28Z M72,22 Q62,2 78,8 Q78,26 72,22Z M128,22 Q138,2 122,8 Q122,26 128,22Z" fill="#4E342E"/>
+    <path id="hb4" d="M44,65 Q25,42 38,28 M156,65 Q175,42 162,28 M88,28 Q80,5 95,15 M112,28 Q120,5 105,15"
+          stroke="#4E342E" stroke-width="4" fill="none" stroke-linecap="round"/>
   `;
-  document.getElementById('hair-acc').innerHTML = '';
+  document.getElementById('hair-acc-group').innerHTML='';
 
-  // reset clothes
-  document.getElementById('torso').setAttribute('fill','#EF9A9A');
-  document.getElementById('arm-l').setAttribute('fill','#EF9A9A');
-  document.getElementById('arm-r').setAttribute('fill','#EF9A9A');
-  document.getElementById('shoe-l').setAttribute('fill','#757575');
-  document.getElementById('shoe-r').setAttribute('fill','#757575');
+  // reset dress to pink
+  document.getElementById('dg1').setAttribute('stop-color','#F48FB1');
+  document.getElementById('dg2').setAttribute('stop-color','#C2185B');
+  document.getElementById('earring-gem-l').setAttribute('fill','#E91E63');
+  document.getElementById('earring-gem-r').setAttribute('fill','#E91E63');
+  document.getElementById('necklace-gem').setAttribute('fill','#FFD700');
 
-  // reset next button
-  document.getElementById('next-btn').onclick = nextPhase;
+  // reset crown
+  document.getElementById('crown').style.opacity='0';
+  document.getElementById('crown').style.transition='';
+
+  // reset floor items
+  ['dust1','dust2','floor-puddle','floor-sock','floor-clip','floor-star'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){ el.style.transition=''; el.style.opacity=''; }
+  });
+
+  // reset dirt canvas
+  dirtCanvas.style.transition='';
+  dirtCanvas.style.opacity='1';
+  drawDirt();
+  updateDirtInteraction(false);
+
+  // reset bath hint
+  document.getElementById('bath-hint').style.display='none';
   document.getElementById('next-btn').classList.remove('show');
+  document.getElementById('next-btn').onclick=nextPhase;
 
+  buildPhaseIndicator();
   flash();
-  setTimeout(renderPhase, 200);
+  setTimeout(renderBathPhase,220);
 }
 
-// ══════════════════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════════════════════
 buildStars();
-renderPhase();
+buildPhaseIndicator();
+setupDirtCanvas();
+setupDirtEvents();
+renderBathPhase();
+
+// resize handler
+window.addEventListener('resize',()=>{
+  const wrap=document.getElementById('princess-wrap');
+  const r=wrap.getBoundingClientRect();
+  const prevW=dirtCanvas.width, prevH=dirtCanvas.height;
+  const imgData=dirtCtx.getImageData(0,0,prevW,prevH);
+  dirtCanvas.width=r.width*2;
+  dirtCanvas.height=r.height*2;
+  dirtCanvas.style.width=r.width+'px';
+  dirtCanvas.style.height=r.height+'px';
+  // scale old image onto new canvas
+  const tmp=document.createElement('canvas');
+  tmp.width=prevW; tmp.height=prevH;
+  tmp.getContext('2d').putImageData(imgData,0,0);
+  dirtCtx.drawImage(tmp,0,0,dirtCanvas.width,dirtCanvas.height);
+});
 
 // PWA
-if ('serviceWorker' in navigator) {
-  const sw = `const C='arrumar-v1';
-    self.addEventListener('install',e=>{self.skipWaiting();});
-    self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});`;
+if('serviceWorker' in navigator){
+  const sw=`const C='princesa-v2';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});`;
   navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'})));
 }
 </script>
