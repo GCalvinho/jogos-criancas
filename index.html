@@ -10,50 +10,22 @@
 <style>
   :root { --safe-top: env(safe-area-inset-top,0px); --safe-bottom: env(safe-area-inset-bottom,0px); }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body {
-    min-height: 100%; width: 100%;
-    background: linear-gradient(160deg, #FFF0F5 0%, #FFF8E7 50%, #F0F8FF 100%);
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    touch-action: manipulation;
-  }
-  main {
-    min-height: 100dvh;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: calc(24px + var(--safe-top)) 20px calc(24px + var(--safe-bottom));
-    gap: 28px;
-  }
+  html, body { min-height: 100%; width: 100%; background: linear-gradient(160deg, #FFF0F5 0%, #FFF8E7 50%, #F0F8FF 100%); font-family: 'Helvetica Neue', Arial, sans-serif; touch-action: manipulation; }
+  main { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: calc(24px + var(--safe-top)) 20px calc(24px + var(--safe-bottom)); gap: 24px; }
   .title-row { text-align: center; }
   .star-row { font-size: 2rem; letter-spacing: 4px; margin-bottom: 6px; }
   .title { font-size: 2rem; font-weight: 900; color: #333; }
-
-  .cards { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 360px; }
-
-  .card {
-    background: #fff;
-    border-radius: 28px;
-    padding: 0;
-    display: flex; align-items: center;
-    box-shadow: 0 6px 0 rgba(0,0,0,.12);
-    text-decoration: none;
-    overflow: hidden;
-    transition: transform .1s, box-shadow .1s;
-    border: 3px solid transparent;
-  }
+  .cards { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 360px; }
+  .card { background: #fff; border-radius: 28px; padding: 0; display: flex; align-items: center; box-shadow: 0 6px 0 rgba(0,0,0,.12); text-decoration: none; overflow: hidden; transition: transform .1s, box-shadow .1s; border: 3px solid transparent; }
   .card:active { transform: scale(.95) translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,.12); }
-
-  .card-icon {
-    width: 100px; height: 100px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 3.2rem;
-  }
-  .card.rest .card-icon { background: #FF5757; }
+  .card-icon { width: 100px; height: 100px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 3.2rem; }
+  .card.rest  .card-icon { background: #FF5757; }
   .card.hotel .card-icon { background: #7C5CBF; }
   .card.cafe  .card-icon { background: #C0622A; }
-
+  .card.clean .card-icon { background: #4FC3F7; }
   .card-body { padding: 16px 16px 16px 12px; flex: 1; }
   .card-emoji-row { font-size: 1.4rem; letter-spacing: 2px; margin-bottom: 4px; }
   .card-sub { font-size: 0.95rem; color: #999; font-weight: 600; }
-
   .footer { font-size: 1.6rem; opacity: .4; }
 </style>
 </head>
@@ -63,7 +35,6 @@
     <div class="star-row">⭐⭐⭐</div>
     <div class="title">Os Meus Jogos</div>
   </div>
-
   <div class="cards">
     <a class="card rest" href="restaurante.html">
       <div class="card-icon">🍽️</div>
@@ -86,8 +57,14 @@
         <div class="card-sub">Café &amp; Pastelaria</div>
       </div>
     </a>
+    <a class="card clean" href="arrumar.html">
+      <div class="card-icon">🛁</div>
+      <div class="card-body">
+        <div class="card-emoji-row">🚿 💇 👗 🏠</div>
+        <div class="card-sub">Hora de Arrumar!</div>
+      </div>
+    </a>
   </div>
-
   <div class="footer">🎀 🌟 🎀</div>
 </main>
 </body>
