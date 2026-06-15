@@ -149,6 +149,72 @@ html,body{height:100%;width:100%;overflow:hidden;background:#1a0a2e;font-family:
 .ctile:active{transform:scale(.88);}
 .ctile.selected{border-color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.5);transform:scale(1.08);}
 
+/* ── WARDROBE (drag-drop clothing phase) ── */
+#wardrobe-overlay{
+  position:absolute;inset:0;z-index:15;
+  pointer-events:none;display:none;
+}
+#wardrobe-overlay.active{display:block;pointer-events:auto;}
+#wardrobe-cabinet{
+  position:absolute;left:0;top:0;bottom:0;
+  width:min(38vw,145px);
+  background:linear-gradient(160deg,#3d1f6e,#2a1250);
+  border-right:3px solid rgba(255,215,0,.35);
+  display:flex;flex-direction:column;align-items:center;
+  padding:10px 6px;gap:8px;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  box-shadow:4px 0 24px rgba(0,0,0,.5);
+}
+#wardrobe-cabinet::-webkit-scrollbar{display:none;}
+.wardrobe-title{font-size:1.1rem;color:rgba(255,215,0,.8);flex-shrink:0;}
+.cloth-item{
+  width:min(28vw,105px);height:min(28vw,105px);
+  border-radius:16px;
+  background:rgba(255,255,255,.1);
+  border:2px solid rgba(255,255,255,.22);
+  display:flex;align-items:center;justify-content:center;
+  cursor:grab;flex-shrink:0;
+  user-select:none;-webkit-user-select:none;touch-action:none;
+  transition:border-color .2s,opacity .3s;
+  position:relative;
+}
+.cloth-item svg{width:82%;height:82%;}
+.cloth-item.equipped{border-color:#FFD700;opacity:.45;cursor:default;}
+.cloth-item.equipped::after{
+  content:'✓';position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:2rem;color:#FFD700;background:rgba(0,0,0,.38);border-radius:14px;
+}
+#drag-ghost{
+  position:fixed;pointer-events:none;z-index:999;display:none;
+  transform:translate(-50%,-50%) scale(1.2);
+  filter:drop-shadow(0 8px 24px rgba(199,125,255,.8));
+  width:88px;height:88px;
+}
+#drag-ghost svg{width:100%;height:100%;}
+#princess-wrap.snap-ready{filter:drop-shadow(0 0 20px rgba(255,215,0,1));}
+#equipped-layer{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:7;overflow:visible;
+}
+
+/* ── HOUSE SCRUB ── */
+#house-scrub-wrap{
+  position:absolute;inset:0;z-index:12;
+  display:none;pointer-events:none;
+}
+#house-scrub-wrap.active{display:block;pointer-events:auto;}
+#house-scrub-canvas{
+  position:absolute;inset:0;width:100%;height:100%;
+  touch-action:none;cursor:crosshair;
+}
+#scrub-tool{
+  position:fixed;pointer-events:none;z-index:998;
+  font-size:2.2rem;display:none;
+  transform:translate(-40%,-40%);
+  transition:none;
+}
+
 /* ── CELEBRATION ── */
 #celebration{
   position:fixed;inset:0;z-index:200;
@@ -498,9 +564,30 @@ html,body{height:100%;width:100%;overflow:hidden;background:#1a0a2e;font-family:
 
       <!-- DIRT CANVAS overlaid on princess -->
       <canvas id="dirt-canvas"></canvas>
+
+      <!-- EQUIPPED CLOTHES layer (same viewBox as princess SVG) -->
+      <svg id="equipped-layer" viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg" overflow="visible"
+           style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:7;"></svg>
+    </div>
+
+    <!-- WARDROBE OVERLAY (shown during dress phase) -->
+    <div id="wardrobe-overlay">
+      <div id="wardrobe-cabinet">
+        <div class="wardrobe-title">👗</div>
+      </div>
+    </div>
+
+    <!-- HOUSE SCRUB OVERLAY -->
+    <div id="house-scrub-wrap">
+      <canvas id="house-scrub-canvas"></canvas>
     </div>
 
   </div><!-- /scene -->
+
+  <!-- Drag ghost follows finger -->
+  <div id="drag-ghost"><svg id="ghost-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"></svg></div>
+  <!-- Scrub tool emoji follows finger -->
+  <div id="scrub-tool">🧹</div>
 
   <!-- PANEL -->
   <div id="panel">
@@ -915,80 +1002,443 @@ function applyHair(i){
 // ══════════════════════════════════════════════════════════════════
 // DRESS / COLOURS
 // ══════════════════════════════════════════════════════════════════
-const DRESSES=[
-  { emoji:'💗', c1:'#F48FB1', c2:'#C2185B', shoe:'#7B1FA2', gem:'#E91E63' },
-  { emoji:'💙', c1:'#81D4FA', c2:'#0277BD', shoe:'#1A237E', gem:'#4FC3F7' },
-  { emoji:'💚', c1:'#A5D6A7', c2:'#2E7D32', shoe:'#1B5E20', gem:'#66BB6A' },
-  { emoji:'💜', c1:'#CE93D8', c2:'#6A1B9A', shoe:'#4A148C', gem:'#AB47BC' },
-  { emoji:'🧡', c1:'#FFCC80', c2:'#E65100', shoe:'#BF360C', gem:'#FF9800' },
-  { emoji:'❤️', c1:'#EF9A9A', c2:'#B71C1C', shoe:'#7F0000', gem:'#EF5350' },
+// ══════════════════════════════════════════════════════════════════
+// WARDROBE — DRAG & DROP CLOTHING
+// ══════════════════════════════════════════════════════════════════
+
+// Each clothing item: id, label emoji, svgContent (for wardrobe tile),
+// equippedSVG (rendered on princess layer at correct position)
+const CLOTHING_ITEMS = [
+  {
+    id: 'dress-pink',
+    emoji: '💗',
+    // SVG shown in wardrobe tile (100x100 viewBox)
+    tile: `<path d="M20,35 Q10,55 8,85 Q30,95 50,96 Q70,95 92,85 Q90,55 80,35 Z" fill="#F48FB1"/>
+           <path d="M30,38 Q50,32 70,38 Q60,44 50,42 Q40,44 30,38Z" fill="rgba(255,255,255,.3)"/>
+           <circle cx="50" cy="92" r="3" fill="rgba(255,255,255,.4)"/>
+           <circle cx="35" cy="80" r="2" fill="rgba(255,255,255,.35)"/>
+           <circle cx="65" cy="75" r="2" fill="rgba(255,255,255,.35)"/>`,
+    // SVG drawn on equipped-layer (200x360 viewBox, same as princess)
+    equipped: `<path d="M55,195 Q10,270 5,340 Q30,355 100,358 Q170,355 195,340 Q190,270 145,195 Z" fill="#F48FB1"/>
+               <path d="M65,210 Q30,265 28,335 Q60,348 100,350 Q140,348 172,335 Q170,265 135,210Z" fill="rgba(255,255,255,.08)"/>
+               <path d="M8,338 Q55,358 100,360 Q145,358 192,338 Q160,350 100,352 Q40,350 8,338Z" fill="rgba(255,255,255,.25)"/>
+               <circle cx="60" cy="280" r="3" fill="rgba(255,255,255,.5)"/>
+               <circle cx="145" cy="260" r="2" fill="rgba(255,255,255,.4)"/>
+               <circle cx="80" cy="310" r="2.5" fill="rgba(255,255,255,.4)"/>
+               <circle cx="130" cy="300" r="3" fill="rgba(255,255,255,.5)"/>
+               <path d="M68,148 Q55,165 55,195 L145,195 Q145,165 132,148 Z" fill="#F48FB1"/>
+               <path d="M75,152 Q65,168 66,190 Q80,195 100,195 Q120,195 134,190 Q135,168 125,152Z" fill="rgba(255,255,255,.12)"/>`,
+    dressColor: {c1:'#F48FB1',c2:'#C2185B',shoe:'#7B1FA2',gem:'#E91E63'},
+    group: 'dress'
+  },
+  {
+    id: 'dress-blue',
+    emoji: '💙',
+    tile: `<path d="M20,35 Q10,55 8,85 Q30,95 50,96 Q70,95 92,85 Q90,55 80,35 Z" fill="#81D4FA"/>
+           <path d="M30,38 Q50,32 70,38 Q60,44 50,42 Q40,44 30,38Z" fill="rgba(255,255,255,.3)"/>
+           <circle cx="50" cy="92" r="3" fill="rgba(255,255,255,.4)"/>
+           <circle cx="35" cy="80" r="2" fill="rgba(255,255,255,.3)"/>`,
+    equipped: `<path d="M55,195 Q10,270 5,340 Q30,355 100,358 Q170,355 195,340 Q190,270 145,195 Z" fill="#81D4FA"/>
+               <path d="M65,210 Q30,265 28,335 Q60,348 100,350 Q140,348 172,335 Q170,265 135,210Z" fill="rgba(255,255,255,.08)"/>
+               <path d="M8,338 Q55,358 100,360 Q145,358 192,338 Q160,350 100,352 Q40,350 8,338Z" fill="rgba(255,255,255,.22)"/>
+               <circle cx="60" cy="280" r="3" fill="rgba(255,255,255,.5)"/>
+               <circle cx="145" cy="260" r="2" fill="rgba(255,255,255,.4)"/>
+               <path d="M68,148 Q55,165 55,195 L145,195 Q145,165 132,148 Z" fill="#81D4FA"/>
+               <path d="M75,152 Q65,168 66,190 Q80,195 100,195 Q120,195 134,190 Q135,168 125,152Z" fill="rgba(255,255,255,.15)"/>`,
+    dressColor: {c1:'#81D4FA',c2:'#0277BD',shoe:'#1A237E',gem:'#4FC3F7'},
+    group: 'dress'
+  },
+  {
+    id: 'dress-purple',
+    emoji: '💜',
+    tile: `<path d="M20,35 Q10,55 8,85 Q30,95 50,96 Q70,95 92,85 Q90,55 80,35 Z" fill="#CE93D8"/>
+           <path d="M30,38 Q50,32 70,38 Q60,44 50,42 Q40,44 30,38Z" fill="rgba(255,255,255,.3)"/>
+           <circle cx="50" cy="88" r="4" fill="rgba(255,255,255,.3)"/>`,
+    equipped: `<path d="M55,195 Q10,270 5,340 Q30,355 100,358 Q170,355 195,340 Q190,270 145,195 Z" fill="#CE93D8"/>
+               <path d="M65,210 Q30,265 28,335 Q60,348 100,350 Q140,348 172,335 Q170,265 135,210Z" fill="rgba(255,255,255,.08)"/>
+               <path d="M8,338 Q55,358 100,360 Q145,358 192,338 Q160,350 100,352 Q40,350 8,338Z" fill="rgba(255,255,255,.2)"/>
+               <path d="M68,148 Q55,165 55,195 L145,195 Q145,165 132,148 Z" fill="#CE93D8"/>`,
+    dressColor: {c1:'#CE93D8',c2:'#6A1B9A',shoe:'#4A148C',gem:'#AB47BC'},
+    group: 'dress'
+  },
+  {
+    id: 'hat-flower',
+    emoji: '🌸',
+    tile: `<ellipse cx="50" cy="60" rx="40" ry="12" fill="#CE93D8"/>
+           <ellipse cx="50" cy="52" rx="26" ry="20" fill="#AB47BC"/>
+           <circle cx="50" cy="38" r="9" fill="#F48FB1"/>
+           <circle cx="40" cy="44" r="8" fill="#F48FB1"/>
+           <circle cx="60" cy="44" r="8" fill="#F48FB1"/>
+           <circle cx="50" cy="50" r="8" fill="#F48FB1"/>
+           <circle cx="50" cy="44" r="7" fill="#FFD700"/>`,
+    equipped: `<ellipse cx="100" cy="44" rx="60" ry="14" fill="#CE93D8"/>
+               <ellipse cx="100" cy="34" rx="40" ry="24" fill="#AB47BC"/>
+               <circle cx="100" cy="14" r="10" fill="#F48FB1"/>
+               <circle cx="85"  cy="22" r="9" fill="#F48FB1"/>
+               <circle cx="115" cy="22" r="9" fill="#F48FB1"/>
+               <circle cx="100" cy="26" r="9" fill="#F48FB1"/>
+               <circle cx="100" cy="20" r="8" fill="#FFD700"/>
+               <circle cx="100" cy="20" r="3" fill="#fff" opacity=".6"/>`,
+    group: 'hat'
+  },
+  {
+    id: 'hat-tiara',
+    emoji: '👑',
+    tile: `<path d="M15,65 L22,40 L35,55 L50,32 L65,55 L78,40 L85,65Z" fill="#FFD700"/>
+           <rect x="15" y="65" width="70" height="14" rx="4" fill="#FFA000"/>
+           <circle cx="50" cy="38" r="6" fill="#E91E63"/>
+           <circle cx="28" cy="47" r="4" fill="#4FC3F7"/>
+           <circle cx="72" cy="47" r="4" fill="#4FC3F7"/>`,
+    equipped: `<path d="M68,32 L75,12 L88,24 L100,7 L112,24 L125,12 L132,32Z" fill="#FFD700"/>
+               <path d="M68,32 L132,32 L128,40 L72,40Z" fill="#FFA000"/>
+               <circle cx="100" cy="12" r="5" fill="#E91E63"/>
+               <circle cx="75"  cy="16" r="3" fill="#4FC3F7"/>
+               <circle cx="125" cy="16" r="3" fill="#4FC3F7"/>`,
+    group: 'hat'
+  },
+  {
+    id: 'shoes-glass',
+    emoji: '👠',
+    tile: `<path d="M12,70 Q30,55 60,58 Q75,60 85,72 Q70,78 50,76 Q28,78 12,70Z" fill="rgba(150,220,255,.6)" stroke="#90CAF9" stroke-width="2"/>
+           <path d="M60,58 Q68,50 72,38 Q76,36 78,42 Q76,52 72,58Z" fill="rgba(150,220,255,.5)" stroke="#90CAF9" stroke-width="1.5"/>
+           <ellipse cx="40" cy="68" rx="18" ry="5" fill="rgba(255,255,255,.3)"/>`,
+    equipped: `<ellipse cx="56"  cy="318" rx="22" ry="12" fill="rgba(150,220,255,.7)" stroke="#90CAF9" stroke-width="2"/>
+               <ellipse cx="144" cy="318" rx="22" ry="12" fill="rgba(150,220,255,.7)" stroke="#90CAF9" stroke-width="2"/>
+               <path d="M50,306 Q56,295 62,306" stroke="#90CAF9" stroke-width="4" fill="none" stroke-linecap="round"/>
+               <path d="M138,306 Q144,295 150,306" stroke="#90CAF9" stroke-width="4" fill="none" stroke-linecap="round"/>
+               <ellipse cx="52"  cy="318" rx="10" ry="4" fill="rgba(255,255,255,.3)"/>
+               <ellipse cx="140" cy="318" rx="10" ry="4" fill="rgba(255,255,255,.3)"/>`,
+    group: 'shoes'
+  },
+  {
+    id: 'shoes-pink',
+    emoji: '🩰',
+    tile: `<path d="M10,68 Q28,52 62,56 Q80,58 88,70 Q70,78 48,76 Q24,78 10,68Z" fill="#F48FB1"/>
+           <ellipse cx="40" cy="66" rx="16" ry="5" fill="rgba(255,255,255,.3)"/>
+           <path d="M62,56 Q66,46 70,40 Q74,44 72,56Z" fill="#F48FB1"/>`,
+    equipped: `<ellipse cx="56"  cy="315" rx="22" ry="12" fill="#F48FB1"/>
+               <ellipse cx="144" cy="315" rx="22" ry="12" fill="#F48FB1"/>
+               <path d="M44,303 Q56,292 68,303" stroke="#E91E63" stroke-width="3" fill="none" stroke-linecap="round"/>
+               <path d="M132,303 Q144,292 156,303" stroke="#E91E63" stroke-width="3" fill="none" stroke-linecap="round"/>
+               <ellipse cx="50"  cy="314" rx="10" ry="4" fill="rgba(255,255,255,.3)"/>
+               <ellipse cx="138" cy="314" rx="10" ry="4" fill="rgba(255,255,255,.3)"/>`,
+    group: 'shoes'
+  },
+  {
+    id: 'gloves',
+    emoji: '🧤',
+    tile: `<path d="M14,30 Q12,55 16,72 Q24,80 34,74 Q38,60 36,44 Q44,38 48,44 Q52,50 48,60 Q52,68 60,64 Q66,56 62,44 Q70,36 76,44 Q80,52 76,62 Q82,70 88,64 Q94,54 88,40 Q80,28 60,24 Q40,18 14,30Z" fill="#CE93D8"/>
+           <path d="M20,32 Q18,55 22,70" stroke="rgba(255,255,255,.3)" stroke-width="3" fill="none"/>`,
+    equipped: `<path d="M4,160 Q2,198 8,218 Q18,228 32,220 Q36,200 32,176 Q44,166 52,178 Q56,192 50,210 Q56,222 68,216 Q76,202 70,180 Q80,168 88,180 Q92,196 86,214 Q94,224 104,218 Q112,200 106,172 Q96,148 68,140 Q38,130 4,160Z" fill="#CE93D8"/>
+               <path d="M164,160 Q198,148 196,172 Q190,200 198,218 Q208,224 216,214 Q210,196 214,180 Q222,168 230,180 Q224,202 230,216 Q242,222 250,210 Q244,192 248,178 Q256,166 268,176 Q264,200 268,220 Q282,228 292,218 Q298,198 296,160 Q262,130 232,140 Q204,148 194,172Z" fill="#CE93D8" transform="scale(-1,1) translate(-200,0)"/>`,
+    group: 'gloves'
+  },
+  {
+    id: 'necklace-stars',
+    emoji: '⭐',
+    tile: `<path d="M15,50 Q50,38 85,50" stroke="#FFD700" stroke-width="4" fill="none" stroke-linecap="round"/>
+           <path d="M50,52 L52,44 L54,52 L62,52 L56,57 L58,65 L52,61 L46,65 L48,57 L42,52Z" fill="#FFD700"/>
+           <circle cx="25" cy="52" r="5" fill="#FFD700"/>
+           <circle cx="75" cy="52" r="5" fill="#FFD700"/>`,
+    equipped: `<path d="M55,148 Q100,138 145,148" stroke="#FFD700" stroke-width="3" fill="none" stroke-linecap="round"/>
+               <path d="M100,152 L103,142 L106,152 L116,152 L109,158 L112,168 L103,163 L94,168 L97,158 L90,152Z" fill="#FFD700"/>
+               <circle cx="62"  cy="150" r="5" fill="#FFD700"/>
+               <circle cx="138" cy="150" r="5" fill="#FFD700"/>
+               <circle cx="80"  cy="145" r="3" fill="#FFD700"/>
+               <circle cx="120" cy="145" r="3" fill="#FFD700"/>`,
+    group: 'necklace'
+  },
 ];
-let selDress=-1;
+
+// equipped state: group -> item id (only one per group)
+let equippedGroups = {};
+let dragItem = null; // { id, svgContent }
+let wardrobeDoneOnce = false;
+
 function renderDressPhase(){
   document.getElementById('phase-label').textContent='👗';
   document.getElementById('action-row').innerHTML='';
-  const tray=document.getElementById('custom-tray');
-  tray.style.display='flex';
-  tray.innerHTML=DRESSES.map((d,i)=>`
-    <div class="ctile ${selDress===i?'selected':''}" onclick="applyDress(${i})">${d.emoji}</div>
-  `).join('');
+  document.getElementById('custom-tray').style.display='none';
+  document.getElementById('bath-hint').style.display='block';
+  document.getElementById('bath-hint').textContent='👆 Arrasta as roupas para a princesa!';
+  updateDirtInteraction(false);
+
+  // Build wardrobe cabinet
+  const cab = document.getElementById('wardrobe-cabinet');
+  cab.innerHTML='<div class="wardrobe-title">👗</div>';
+  CLOTHING_ITEMS.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='cloth-item'+(equippedGroups[item.group]===item.id?' equipped':'');
+    div.id='cloth-'+item.id;
+    div.innerHTML=`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${item.tile}</svg>`;
+    div.addEventListener('mousedown', e=>startDrag(e, item));
+    div.addEventListener('touchstart', e=>startDrag(e, item), {passive:false});
+    cab.appendChild(div);
+  });
+
+  document.getElementById('wardrobe-overlay').classList.add('active');
+  setupDragEvents();
+  renderEquipped();
+
+  // Show next if at least 2 items equipped
+  if(Object.keys(equippedGroups).length>=2){
+    document.getElementById('next-btn').classList.add('show');
+  }
 }
-let dressDoneOnce=false;
-function applyDress(i){
-  selDress=i;
-  const d=DRESSES[i];
-  document.getElementById('dg1').setAttribute('stop-color',d.c1);
-  document.getElementById('dg2').setAttribute('stop-color',d.c2);
-  document.getElementById('shoe-l')||0;
-  // shoes: find ellipses by updating shoe fill via JS
-  document.querySelectorAll('[id^="shoe"]').forEach(el=>el.setAttribute('fill',d.shoe));
-  // earring gems
-  document.getElementById('earring-gem-l').setAttribute('fill',d.gem);
-  document.getElementById('earring-gem-r').setAttribute('fill',d.gem);
-  document.getElementById('necklace-gem').setAttribute('fill',d.gem);
+
+function renderEquipped(){
+  const layer = document.getElementById('equipped-layer');
+  layer.innerHTML = Object.entries(equippedGroups).map(([group, id])=>{
+    const item = CLOTHING_ITEMS.find(i=>i.id===id);
+    return item ? `<g class="eq-${group}">${item.equipped}</g>` : '';
+  }).join('');
+}
+
+// ── DRAG & DROP ──────────────────────────────────────────
+const ghost = document.getElementById('drag-ghost');
+const ghostSvg = document.getElementById('ghost-svg');
+
+function getEvtPos(e){
+  if(e.touches) return {x:e.touches[0].clientX, y:e.touches[0].clientY};
+  return {x:e.clientX, y:e.clientY};
+}
+
+function startDrag(e, item){
+  e.preventDefault();
+  if(equippedGroups[item.group]===item.id) return; // already on
+  dragItem = item;
+  ghostSvg.innerHTML = item.tile;
+  ghost.style.display='block';
+  const pos = getEvtPos(e);
+  ghost.style.left = pos.x+'px';
+  ghost.style.top  = pos.y+'px';
+}
+
+function setupDragEvents(){
+  // prevent double-binding
+  if(window._dragBound) return;
+  window._dragBound = true;
+
+  function onMove(e){
+    if(!dragItem) return;
+    e.preventDefault();
+    const pos = getEvtPos(e);
+    ghost.style.left = pos.x+'px';
+    ghost.style.top  = pos.y+'px';
+    // check if near princess
+    const wrap = document.getElementById('princess-wrap');
+    const r = wrap.getBoundingClientRect();
+    const cx = r.left+r.width/2, cy = r.top+r.height/2;
+    const dist = Math.hypot(pos.x-cx, pos.y-cy);
+    wrap.classList.toggle('snap-ready', dist < r.width*0.9);
+  }
+
+  function onEnd(e){
+    if(!dragItem) return;
+    ghost.style.display='none';
+    const wrap = document.getElementById('princess-wrap');
+    const r = wrap.getBoundingClientRect();
+    const pos = e.changedTouches ? {x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY} : {x:e.clientX,y:e.clientY};
+    const cx = r.left+r.width/2, cy = r.top+r.height/2;
+    const dist = Math.hypot(pos.x-cx, pos.y-cy);
+    wrap.classList.remove('snap-ready');
+
+    if(dist < r.width*0.95){
+      equipItem(dragItem);
+    }
+    dragItem = null;
+  }
+
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onEnd);
+  window.addEventListener('touchmove', onMove, {passive:false});
+  window.addEventListener('touchend', onEnd);
+}
+
+function equipItem(item){
+  equippedGroups[item.group] = item.id;
+
+  // apply dress colour if it's a dress
+  if(item.dressColor){
+    const d = item.dressColor;
+    document.getElementById('dg1').setAttribute('stop-color',d.c1);
+    document.getElementById('dg2').setAttribute('stop-color',d.c2);
+    document.getElementById('earring-gem-l').setAttribute('fill',d.gem);
+    document.getElementById('earring-gem-r').setAttribute('fill',d.gem);
+    document.getElementById('necklace-gem').setAttribute('fill',d.gem);
+  }
+
+  renderEquipped();
+  // update wardrobe tile states
+  document.querySelectorAll('.cloth-item').forEach(el=>{
+    const id = el.id.replace('cloth-','');
+    const it = CLOTHING_ITEMS.find(i=>i.id===id);
+    if(it) el.className='cloth-item'+(equippedGroups[it.group]===it.id?' equipped':'');
+  });
+
   spawnSparklesAround();
-  if(!dressDoneOnce){ dressDoneOnce=true; addStars(3); }
-  renderDressPhase();
-  document.getElementById('next-btn').classList.add('show');
+
+  if(!wardrobeDoneOnce){ wardrobeDoneOnce=true; addStars(1); }
+  // bonus star per item after first
+  const n = Object.keys(equippedGroups).length;
+  if(n===3) addStars(1);
+  if(n>=5) addStars(1);
+
+  if(n>=2) document.getElementById('next-btn').classList.add('show');
 }
 
 // ══════════════════════════════════════════════════════════════════
-// ROOM CLEANING
+// ROOM CLEANING — SCRUB CANVAS
 // ══════════════════════════════════════════════════════════════════
-const ROOM_TASKS=[
-  { emoji:'🧹', label:'', targets:['dust1','dust2','floor-puddle'] },
-  { emoji:'🧺', label:'', targets:['floor-sock','floor-clip'] },
-  { emoji:'🌟', label:'', targets:['floor-star'] },
+let scrubCtx, scrubCanvas, scrubActive=false, lastSX=0, lastSY=0;
+let scrubPct=0, scrubDone=false;
+const scrubTool = document.getElementById('scrub-tool');
+
+// Which dirt items to remove at which scrub percentage
+const SCRUB_STAGES=[
+  {pct:20, ids:['dust1','dust2']},
+  {pct:40, ids:['floor-puddle']},
+  {pct:60, ids:['floor-sock','floor-clip']},
+  {pct:80, ids:['floor-star']},
 ];
-let roomDone=[false,false,false];
+let scrubStagesDone=[false,false,false,false];
+let roomStarsGiven=false;
+
+function setupScrubCanvas(){
+  scrubCanvas = document.getElementById('house-scrub-canvas');
+  const scene = document.getElementById('scene');
+  const r = scene.getBoundingClientRect();
+  scrubCanvas.width = r.width*2;
+  scrubCanvas.height = r.height*2;
+  scrubCanvas.style.width = r.width+'px';
+  scrubCanvas.style.height = r.height+'px';
+  scrubCtx = scrubCanvas.getContext('2d');
+  drawGrime();
+}
+
+function drawGrime(){
+  const W=scrubCanvas.width, H=scrubCanvas.height;
+  scrubCtx.clearRect(0,0,W,H);
+  // dark film over the floor area only (bottom 45%)
+  scrubCtx.fillStyle='rgba(40,25,10,.55)';
+  scrubCtx.fillRect(0, H*.52, W, H*.48);
+  // some smudges on walls
+  [ [.25,.3,.18,.08], [.7,.25,.15,.07], [.5,.45,.12,.06] ].forEach(([x,y,rx,ry])=>{
+    scrubCtx.beginPath();
+    scrubCtx.ellipse(x*W,y*H,rx*W,ry*H,0,0,Math.PI*2);
+    scrubCtx.fillStyle='rgba(40,25,10,.35)';
+    scrubCtx.fill();
+  });
+  scrubPct=0; scrubDone=false;
+  scrubStagesDone=[false,false,false,false];
+}
+
+function getScrubPos(e){
+  const r=scrubCanvas.getBoundingClientRect();
+  const sx=scrubCanvas.width/r.width, sy=scrubCanvas.height/r.height;
+  const src=e.touches?e.touches[0]:e;
+  return [(src.clientX-r.left)*sx, (src.clientY-r.top)*sy];
+}
+
+function eraseScrub(x,y){
+  scrubCtx.save();
+  scrubCtx.globalCompositeOperation='destination-out';
+  const grad=scrubCtx.createRadialGradient(x,y,0,x,y,80);
+  grad.addColorStop(0,'rgba(0,0,0,1)');
+  grad.addColorStop(.5,'rgba(0,0,0,.9)');
+  grad.addColorStop(1,'rgba(0,0,0,0)');
+  scrubCtx.fillStyle=grad;
+  scrubCtx.beginPath();
+  scrubCtx.arc(x,y,80,0,Math.PI*2);
+  scrubCtx.fill();
+  scrubCtx.restore();
+
+  // move tool emoji
+  const r=scrubCanvas.getBoundingClientRect();
+  const scaleX=r.width/scrubCanvas.width, scaleY=r.height/scrubCanvas.height;
+  const scene=document.getElementById('scene');
+  const sr=scene.getBoundingClientRect();
+  scrubTool.style.left=(sr.left+x*scaleX)+'px';
+  scrubTool.style.top =(sr.top +y*scaleY)+'px';
+  checkScrubProgress();
+}
+
+function checkScrubProgress(){
+  const data=scrubCtx.getImageData(0,0,scrubCanvas.width,scrubCanvas.height).data;
+  let nonZero=0;
+  for(let i=3;i<data.length;i+=12) if(data[i]>20) nonZero++;
+  const total=data.length/48;
+  scrubPct=Math.min(100,(1-nonZero/total)*100);
+
+  SCRUB_STAGES.forEach((s,i)=>{
+    if(!scrubStagesDone[i] && scrubPct>=s.pct){
+      scrubStagesDone[i]=true;
+      s.ids.forEach(id=>{
+        const el=document.getElementById(id);
+        if(el){el.style.transition='opacity .7s';el.style.opacity='0';}
+      });
+      spawnSparklesAround();
+      addStars(1);
+    }
+  });
+
+  if(scrubPct>82 && !scrubDone){
+    scrubDone=true;
+    if(!roomStarsGiven){roomStarsGiven=true;addStars(1);}
+    const crown=document.getElementById('crown');
+    crown.style.transition='opacity .8s';crown.style.opacity='1';
+    setTimeout(()=>{
+      scrubTool.style.display='none';
+      document.getElementById('next-btn').onclick=celebrate;
+      document.getElementById('next-btn').classList.add('show');
+    },700);
+  }
+}
+
+function setupScrubEvents(){
+  if(window._scrubBound) return;
+  window._scrubBound=true;
+  function start(e){
+    e.preventDefault();
+    scrubActive=true;
+    const[x,y]=getScrubPos(e);
+    lastSX=x;lastSY=y;
+    scrubTool.style.display='block';
+    eraseScrub(x,y);
+  }
+  function move(e){
+    e.preventDefault();
+    if(!scrubActive) return;
+    const[x,y]=getScrubPos(e);
+    const dist=Math.hypot(x-lastSX,y-lastSY);
+    const steps=Math.max(1,Math.floor(dist/25));
+    for(let i=1;i<=steps;i++){
+      eraseScrub(lastSX+(x-lastSX)*(i/steps), lastSY+(y-lastSY)*(i/steps));
+    }
+    lastSX=x;lastSY=y;
+  }
+  function stop(){ scrubActive=false; }
+  scrubCanvas.addEventListener('mousedown',start);
+  scrubCanvas.addEventListener('mousemove',move);
+  scrubCanvas.addEventListener('mouseup',stop);
+  scrubCanvas.addEventListener('touchstart',start,{passive:false});
+  scrubCanvas.addEventListener('touchmove',move,{passive:false});
+  scrubCanvas.addEventListener('touchend',stop,{passive:false});
+}
+
 function renderRoomPhase(){
   document.getElementById('phase-label').textContent='🏠';
+  document.getElementById('action-row').innerHTML='';
   document.getElementById('custom-tray').style.display='none';
-  const row=document.getElementById('action-row');
-  row.innerHTML=ROOM_TASKS.map((t,i)=>`
-    <button class="abtn ${roomDone[i]?'done':''}" onclick="doRoom(${i})">
-      ${t.emoji}
-      ${roomDone[i]?'<span class="tick">✓</span>':''}
-    </button>
-  `).join('');
-}
-let roomStarsGiven=false;
-function doRoom(i){
-  if(roomDone[i]) return;
-  roomDone[i]=true;
-  ROOM_TASKS[i].targets.forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){ el.style.transition='opacity .6s'; el.style.opacity='0'; }
-  });
-  spawnSparklesAround();
-  renderRoomPhase();
-  if(roomDone.every(Boolean)){
-    if(!roomStarsGiven){ roomStarsGiven=true; addStars(3); }
-    // show crown!
-    const crown=document.getElementById('crown');
-    crown.style.transition='opacity .8s'; crown.style.opacity='1';
-    setTimeout(()=>{ document.getElementById('next-btn').onclick=celebrate; document.getElementById('next-btn').classList.add('show'); },600);
-  }
+  document.getElementById('bath-hint').style.display='block';
+  document.getElementById('bath-hint').textContent='🧹 Esfrega o chão com o dedo!';
+  document.getElementById('wardrobe-overlay').classList.remove('active');
+
+  setupScrubCanvas();
+  setupScrubEvents();
+  document.getElementById('house-scrub-wrap').classList.add('active');
+  scrubTool.style.display='none';
+  updateDirtInteraction(false);
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -1010,6 +1460,10 @@ function renderBathPhase(){
 
 function nextPhase(){
   flash();
+  // hide wardrobe and scrub when leaving those phases
+  document.getElementById('wardrobe-overlay').classList.remove('active');
+  document.getElementById('house-scrub-wrap').classList.remove('active');
+  scrubTool.style.display='none';
   setTimeout(()=>{
     currentPhase++;
     document.getElementById('next-btn').classList.remove('show');
@@ -1017,8 +1471,6 @@ function nextPhase(){
     if(currentPhase<PHASE_RENDERS.length){
       updatePhaseIndicator();
       PHASE_RENDERS[currentPhase]();
-      // hide bath hint in later phases
-      if(currentPhase>0) document.getElementById('bath-hint').style.display='none';
     }
   },220);
 }
@@ -1064,9 +1516,10 @@ function launchConfetti(){
 function resetGame(){
   document.getElementById('celebration').classList.remove('show');
   currentPhase=0; starsLit=0;
-  selHair=-1; selDress=-1;
-  hairDoneOnce=false; dressDoneOnce=false;
-  roomDone=[false,false,false]; roomStarsGiven=false;
+  selHair=-1;
+  hairDoneOnce=false; wardrobeDoneOnce=false;
+  equippedGroups={}; roomStarsGiven=false;
+  scrubPct=0; scrubDone=false; scrubStagesDone=[false,false,false,false];
 
   // reset stars
   document.querySelectorAll('.star-pip').forEach(s=>s.classList.remove('lit','pop'));
@@ -1081,7 +1534,6 @@ function resetGame(){
     <path d="M156,65 Q172,50 162,28 Q148,38 154,62Z" fill="#5D4037"/>
     <path d="M100,28 Q88,5 108,10 Q105,32 100,28Z M72,22 Q62,2 78,8 Q78,26 72,22Z M128,22 Q138,2 122,8 Q122,26 128,22Z" fill="#4E342E"/>
   `;
-  // reset hair front (fringe)
   document.getElementById('hair-front').innerHTML=`
     <path d="M54,72 Q48,52 58,38 Q64,55 60,72Z" fill="#5D4037"/>
     <path d="M70,63 Q66,40 78,30 Q80,50 76,65Z" fill="#4E342E"/>
@@ -1094,7 +1546,10 @@ function resetGame(){
   `;
   document.getElementById('hair-acc-group').innerHTML='';
 
-  // reset dress to pink
+  // reset equipped clothes overlay
+  document.getElementById('equipped-layer').innerHTML='';
+
+  // reset dress gradient
   document.getElementById('dg1').setAttribute('stop-color','#F48FB1');
   document.getElementById('dg2').setAttribute('stop-color','#C2185B');
   document.getElementById('earring-gem-l').setAttribute('fill','#E91E63');
@@ -1117,7 +1572,12 @@ function resetGame(){
   drawDirt();
   updateDirtInteraction(false);
 
-  // reset bath hint
+  // hide overlays
+  document.getElementById('wardrobe-overlay').classList.remove('active');
+  document.getElementById('house-scrub-wrap').classList.remove('active');
+  scrubTool.style.display='none';
+  if(scrubCtx && scrubCanvas) drawGrime();
+
   document.getElementById('bath-hint').style.display='none';
   document.getElementById('next-btn').classList.remove('show');
   document.getElementById('next-btn').onclick=nextPhase;
