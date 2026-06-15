@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Restaurante">
+<meta name="theme-color" content="#FF5757">
+<title>🍽️ Restaurante</title>
+<style>
+  :root {
+    --coral:   #FF5757;
+    --yellow:  #FFB800;
+    --green:   #4CAF50;
+    --blue:    #2196F3;
+    --paper:   #FFF8E7;
+    --ink:     #3B2F1E;
+    --shadow:  rgba(59,47,30,0.18);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%; width: 100%;
+    overflow: hidden;
+    background: var(--paper);
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    touch-action: manipulation;
+  }
+
+  /* ── LAYOUT ── */
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    height: 100dvh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--coral);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+    gap: 10px;
+    box-shadow: 0 3px 10px var(--shadow);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .logo { font-size: 2rem; line-height: 1; }
+
+  /* order badge */
+  #order-btn {
+    background: var(--yellow);
+    border: none;
+    border-radius: 50px;
+    padding: 8px 18px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 0 4px 0 #C88A00;
+    transition: transform .08s, box-shadow .08s;
+    flex-shrink: 0;
+    min-width: 80px;
+    justify-content: center;
+  }
+  #order-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #C88A00; }
+
+  #badge {
+    background: var(--coral);
+    color: #fff;
+    border-radius: 50%;
+    min-width: 28px;
+    height: 28px;
+    font-size: 1rem;
+    font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .2s;
+  }
+  #badge.pop { animation: pop .3s; }
+  @keyframes pop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.6); }
+    100% { transform: scale(1); }
+  }
+
+  /* ── CATEGORY TABS ── */
+  #tabs {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #fff;
+    scrollbar-width: none;
+    flex-shrink: 0;
+    border-bottom: 3px solid #f0e6cc;
+  }
+  #tabs::-webkit-scrollbar { display: none; }
+
+  .tab-btn {
+    background: #f0e6cc;
+    border: none;
+    border-radius: 50px;
+    padding: 8px 16px;
+    font-size: 1.4rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s, transform .08s;
+    flex-shrink: 0;
+  }
+  .tab-btn.active { background: var(--coral); transform: scale(1.08); }
+  .tab-btn:active { transform: scale(.93); }
+
+  /* ── MENU GRID ── */
+  #menu {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .item-btn {
+    background: #fff;
+    border: 3px solid #f0e6cc;
+    border-radius: 18px;
+    padding: 12px 6px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: transform .1s, border-color .1s, box-shadow .1s;
+    box-shadow: 0 3px 0 #e8d8b0;
+    position: relative;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .item-btn:active { transform: scale(.91); box-shadow: 0 1px 0 #e8d8b0; }
+  .item-btn.added {
+    border-color: var(--green);
+    box-shadow: 0 3px 0 #357a38;
+    animation: shake .25s;
+  }
+  @keyframes shake {
+    0%,100%{ transform: scale(1); }
+    25%     { transform: scale(1.12) rotate(-3deg); }
+    75%     { transform: scale(1.12) rotate(3deg); }
+  }
+
+  .item-emoji { font-size: 2.5rem; line-height: 1; }
+  .item-price {
+    background: var(--yellow);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 1rem;
+    font-weight: 900;
+    color: var(--ink);
+  }
+
+  /* floating +1 animation */
+  .float-up {
+    position: fixed;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--green);
+    pointer-events: none;
+    z-index: 999;
+    animation: floatUp .7s ease-out forwards;
+  }
+  @keyframes floatUp {
+    0%   { opacity:1; transform: translateY(0) scale(1); }
+    100% { opacity:0; transform: translateY(-70px) scale(1.4); }
+  }
+
+  /* ── ORDER PANEL (slide-up) ── */
+  #order-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    background: var(--paper);
+    transform: translateY(100%);
+    transition: transform .35s cubic-bezier(.4,0,.2,1);
+  }
+  #order-panel.open { transform: translateY(0); }
+
+  .panel-header {
+    background: var(--coral);
+    padding: 14px 16px;
+    padding-top: calc(14px + env(safe-area-inset-top, 0px));
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 3px 10px var(--shadow);
+    flex-shrink: 0;
+  }
+
+  .panel-title { font-size: 2rem; }
+
+  .close-btn {
+    background: rgba(255,255,255,.35);
+    border: none;
+    border-radius: 50%;
+    width: 46px; height: 46px;
+    font-size: 1.6rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    margin-left: auto;
+    transition: background .15s, transform .08s;
+    flex-shrink: 0;
+  }
+  .close-btn:active { transform: scale(.88); background: rgba(255,255,255,.6); }
+
+  #order-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .order-row {
+    background: #fff;
+    border-radius: 16px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 2px solid #f0e6cc;
+    box-shadow: 0 2px 0 #e8d8b0;
+    animation: slideIn .25s ease-out;
+  }
+  @keyframes slideIn {
+    from { opacity:0; transform: translateX(30px); }
+    to   { opacity:1; transform: translateX(0); }
+  }
+
+  .row-emoji { font-size: 2rem; }
+  .row-price { font-size: 1.1rem; font-weight: 900; color: var(--ink); margin-left: auto; }
+
+  .qty-ctrl {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .qty-btn {
+    background: var(--coral);
+    border: none;
+    border-radius: 50%;
+    width: 34px; height: 34px;
+    font-size: 1.3rem;
+    color: #fff;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .08s;
+    font-weight: 900;
+    flex-shrink: 0;
+  }
+  .qty-btn.plus { background: var(--green); }
+  .qty-btn:active { transform: scale(.85); }
+  .qty-num { font-size: 1.3rem; font-weight: 900; min-width: 20px; text-align: center; }
+
+  /* empty state */
+  #empty-order {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #bbb;
+  }
+  #empty-order .big { font-size: 4rem; }
+
+  /* total bar */
+  #total-bar {
+    background: var(--green);
+    padding: 14px 20px;
+    padding-bottom: calc(14px + var(--safe-bottom));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  #total-emoji { font-size: 2.2rem; }
+  #total-amount {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 1px;
+  }
+
+  #pay-btn {
+    background: var(--yellow);
+    border: none;
+    border-radius: 50px;
+    padding: 12px 20px;
+    font-size: 1.8rem;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #C88A00;
+    transition: transform .08s, box-shadow .08s;
+  }
+  #pay-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #C88A00; }
+
+  /* ── RECEIPT SCREEN ── */
+  #receipt-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    gap: 20px;
+    transform: scale(0.8);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform .35s cubic-bezier(.4,0,.2,1), opacity .35s;
+  }
+  #receipt-screen.open {
+    transform: scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .receipt-paper {
+    background: #fff;
+    border-radius: 24px;
+    padding: 28px 24px 24px;
+    width: 100%;
+    max-width: 340px;
+    box-shadow: 0 8px 30px var(--shadow);
+    border: 3px solid #f0e6cc;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .receipt-top {
+    text-align: center;
+    font-size: 3rem;
+  }
+  .receipt-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .receipt-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.5rem;
+    padding: 6px 0;
+    border-bottom: 1px dashed #e8d8b0;
+  }
+  .receipt-item:last-child { border-bottom: none; }
+  .ri-emoji { font-size: 1.8rem; }
+  .ri-qty { font-weight: 900; font-size: 1.2rem; color: var(--coral); }
+  .ri-price { margin-left: auto; font-weight: 900; }
+
+  .receipt-divider {
+    border: none;
+    border-top: 3px dashed #e8d8b0;
+  }
+  .receipt-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 1.8rem;
+    font-weight: 900;
+  }
+
+  .coins { font-size: 2rem; }
+
+  .new-table-btn {
+    background: var(--coral);
+    border: none;
+    border-radius: 50px;
+    padding: 16px 32px;
+    font-size: 2.5rem;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #b83c3c;
+    transition: transform .08s, box-shadow .08s;
+  }
+  .new-table-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #b83c3c; }
+
+  /* confetti */
+  .confetti-piece {
+    position: fixed;
+    width: 12px; height: 12px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 300;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0%   { opacity:1; transform: translateY(-20px) rotate(0deg); }
+    100% { opacity:0; transform: translateY(100vh) rotate(720deg); }
+  }
+
+  /* bottom safe area */
+  #tab-bottom-spacer {
+    height: env(safe-area-inset-bottom, 0px);
+    background: var(--paper);
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">🍽️</div>
+    <button id="order-btn" onclick="openPanel()" aria-label="Ver pedido">
+      📋 <span id="badge">0</span>
+    </button>
+  </header>
+
+  <!-- CATEGORY TABS -->
+  <div id="tabs"></div>
+
+  <!-- MENU GRID -->
+  <div id="menu">
+    <div class="menu-grid" id="grid"></div>
+  </div>
+
+  <div id="tab-bottom-spacer"></div>
+</div>
+
+<!-- ORDER PANEL -->
+<div id="order-panel" role="dialog" aria-modal="true">
+  <div class="panel-header">
+    <span class="panel-title">📋</span>
+    <button class="close-btn" onclick="closePanel()" aria-label="Fechar">✕</button>
+  </div>
+  <div id="order-list"></div>
+  <div id="total-bar">
+    <span id="total-emoji">🧾</span>
+    <span id="total-amount">0,00€</span>
+    <button id="pay-btn" onclick="showReceipt()" aria-label="Pagar">💰</button>
+  </div>
+</div>
+
+<!-- RECEIPT SCREEN -->
+<div id="receipt-screen" aria-live="polite">
+  <div class="receipt-paper">
+    <div class="receipt-top">🎉</div>
+    <div class="receipt-items" id="receipt-items"></div>
+    <hr class="receipt-divider">
+    <div class="receipt-total">
+      <span class="coins">💶</span>
+      <span id="receipt-total-text"></span>
+    </div>
+  </div>
+  <button class="new-table-btn" onclick="newTable()" aria-label="Nova mesa">🆕🪑</button>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────
+const MENU = [
+  // Bebidas
+  { id:1,  cat:'🥤', emoji:'🧃', price:1.50 },
+  { id:2,  cat:'🥤', emoji:'🥤', price:1.00 },
+  { id:3,  cat:'🥤', emoji:'🍼', price:1.00 },
+  { id:4,  cat:'🥤', emoji:'☕', price:1.50 },
+  { id:5,  cat:'🥤', emoji:'🧋', price:2.50 },
+  { id:6,  cat:'🥤', emoji:'🍵', price:1.50 },
+
+  // Sopas & Entradas
+  { id:7,  cat:'🍲', emoji:'🍲', price:2.50 },
+  { id:8,  cat:'🍲', emoji:'🥗', price:3.50 },
+  { id:9,  cat:'🍲', emoji:'🍞', price:1.00 },
+  { id:10, cat:'🍲', emoji:'🧆', price:2.00 },
+
+  // Pratos
+  { id:11, cat:'🍽️', emoji:'🍝', price:6.50 },
+  { id:12, cat:'🍽️', emoji:'🍕', price:7.00 },
+  { id:13, cat:'🍽️', emoji:'🍔', price:6.00 },
+  { id:14, cat:'🍽️', emoji:'🌮', price:5.50 },
+  { id:15, cat:'🍽️', emoji:'🥘', price:7.50 },
+  { id:16, cat:'🍽️', emoji:'🍜', price:6.00 },
+  { id:17, cat:'🍽️', emoji:'🥩', price:9.00 },
+  { id:18, cat:'🍽️', emoji:'🐟', price:8.50 },
+
+  // Sobremesas
+  { id:19, cat:'🍰', emoji:'🍰', price:2.50 },
+  { id:20, cat:'🍰', emoji:'🍦', price:2.00 },
+  { id:21, cat:'🍰', emoji:'🧁', price:2.00 },
+  { id:22, cat:'🍰', emoji:'🍫', price:1.50 },
+  { id:23, cat:'🍰', emoji:'🍓', price:2.00 },
+];
+
+const CATS = ['🥤','🍲','🍽️','🍰'];
+let activeCat = '🍽️';
+let order = {}; // { itemId: qty }
+
+// ── INIT ──────────────────────────────────────────────────
+function init() {
+  renderTabs();
+  renderGrid();
+}
+
+// ── TABS ──────────────────────────────────────────────────
+function renderTabs() {
+  const el = document.getElementById('tabs');
+  el.innerHTML = CATS.map(c => `
+    <button class="tab-btn ${c===activeCat?'active':''}"
+      onclick="switchCat('${c}')" aria-label="${c}">
+      ${c}
+    </button>
+  `).join('');
+}
+
+function switchCat(cat) {
+  activeCat = cat;
+  renderTabs();
+  renderGrid();
+}
+
+// ── MENU GRID ──────────────────────────────────────────────
+function renderGrid() {
+  const items = MENU.filter(i => i.cat === activeCat);
+  document.getElementById('grid').innerHTML = items.map(item => `
+    <button class="item-btn" id="item-${item.id}"
+      onclick="addItem(${item.id}, event)"
+      aria-label="${item.emoji} ${fmtPrice(item.price)}">
+      <span class="item-emoji">${item.emoji}</span>
+      <span class="item-price">${fmtPrice(item.price)}</span>
+    </button>
+  `).join('');
+}
+
+// ── ADD ITEM ──────────────────────────────────────────────
+function addItem(id, ev) {
+  order[id] = (order[id] || 0) + 1;
+
+  // visual feedback on button
+  const btn = document.getElementById('item-${id}') || ev.currentTarget;
+  btn.classList.add('added');
+  setTimeout(() => btn.classList.remove('added'), 300);
+
+  // +1 float animation
+  const rect = ev.currentTarget.getBoundingClientRect();
+  const fl = document.createElement('div');
+  fl.className = 'float-up';
+  fl.textContent = '+1';
+  fl.style.left = (rect.left + rect.width/2 - 20) + 'px';
+  fl.style.top  = (rect.top) + 'px';
+  document.body.appendChild(fl);
+  setTimeout(() => fl.remove(), 700);
+
+  // badge
+  updateBadge();
+}
+
+// ── BADGE ──────────────────────────────────────────────────
+function updateBadge() {
+  const total = Object.values(order).reduce((a,b)=>a+b,0);
+  const badge = document.getElementById('badge');
+  badge.textContent = total;
+  badge.classList.remove('pop');
+  void badge.offsetWidth;
+  badge.classList.add('pop');
+}
+
+// ── ORDER PANEL ───────────────────────────────────────────
+function openPanel() {
+  renderOrderList();
+  document.getElementById('order-panel').classList.add('open');
+}
+function closePanel() {
+  document.getElementById('order-panel').classList.remove('open');
+}
+
+function renderOrderList() {
+  const list = document.getElementById('order-list');
+  const keys = Object.keys(order).map(Number).filter(id => order[id] > 0);
+
+  if (keys.length === 0) {
+    list.innerHTML = `
+      <div id="empty-order">
+        <span class="big">🍽️</span>
+      </div>`;
+    updateTotalBar(0);
+    return;
+  }
+
+  let total = 0;
+  list.innerHTML = keys.map(id => {
+    const item = MENU.find(i=>i.id===id);
+    const qty = order[id];
+    const sub = item.price * qty;
+    total += sub;
+    return `
+      <div class="order-row">
+        <span class="row-emoji">${item.emoji}</span>
+        <div class="qty-ctrl">
+          <button class="qty-btn" onclick="changeQty(${id},-1)" aria-label="Remover">−</button>
+          <span class="qty-num">${qty}</span>
+          <button class="qty-btn plus" onclick="changeQty(${id},+1)" aria-label="Adicionar">+</button>
+        </div>
+        <span class="row-price">${fmtPrice(sub)}</span>
+      </div>`;
+  }).join('');
+
+  updateTotalBar(total);
+}
+
+function changeQty(id, delta) {
+  order[id] = Math.max(0, (order[id]||0) + delta);
+  if (order[id] === 0) delete order[id];
+  renderOrderList();
+  updateBadge();
+}
+
+function updateTotalBar(total) {
+  document.getElementById('total-amount').textContent = fmtPrice(total);
+  document.getElementById('pay-btn').style.display = total > 0 ? '' : 'none';
+}
+
+// ── RECEIPT ───────────────────────────────────────────────
+function showReceipt() {
+  const keys = Object.keys(order).map(Number).filter(id=>order[id]>0);
+  if (keys.length === 0) return;
+
+  let total = 0;
+  document.getElementById('receipt-items').innerHTML = keys.map(id => {
+    const item = MENU.find(i=>i.id===id);
+    const qty = order[id];
+    const sub = item.price * qty;
+    total += sub;
+    return `
+      <div class="receipt-item">
+        <span class="ri-emoji">${item.emoji}</span>
+        <span class="ri-qty">×${qty}</span>
+        <span class="ri-price">${fmtPrice(sub)}</span>
+      </div>`;
+  }).join('');
+
+  document.getElementById('receipt-total-text').textContent = fmtPrice(total);
+
+  closePanel();
+  document.getElementById('receipt-screen').classList.add('open');
+  launchConfetti();
+}
+
+function newTable() {
+  document.getElementById('receipt-screen').classList.remove('open');
+  order = {};
+  updateBadge();
+  renderGrid();
+}
+
+// ── CONFETTI ──────────────────────────────────────────────
+function launchConfetti() {
+  const colors = ['#FF5757','#FFB800','#4CAF50','#2196F3','#FF69B4','#FF8C00'];
+  for (let i=0; i<50; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random()*100 + 'vw';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.animationDuration = (1.5 + Math.random()*2) + 's';
+    el.style.animationDelay = (Math.random()*.5) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+}
+
+// ── UTILS ──────────────────────────────────────────────────
+function fmtPrice(v) {
+  return v.toFixed(2).replace('.',',') + '€';
+}
+
+// ── PWA SERVICE WORKER ────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  const sw = `
+    const CACHE = 'restaurante-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/restaurante.html'])));
+      self.skipWaiting();
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+    });
+  `;
+  const blob = new Blob([sw], {type:'text/javascript'});
+  const url  = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url);
+}
+
+init();
+</script>
+</body>
+</html>
