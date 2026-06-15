@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Pastelaria">
+<meta name="theme-color" content="#C0622A">
+<title>☕ Pastelaria</title>
+<style>
+  :root {
+    --brown:   #C0622A;
+    --cream:   #F5E6C8;
+    --pink:    #E8507A;
+    --mint:    #3BAB7A;
+    --paper:   #FDF6EC;
+    --ink:     #3B1F0A;
+    --shadow:  rgba(59,31,10,0.18);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; width: 100%; overflow: hidden; background: var(--paper); font-family: 'Helvetica Neue', Arial, sans-serif; touch-action: manipulation; }
+  #app { display: flex; flex-direction: column; height: 100%; height: 100dvh; }
+
+  header {
+    background: var(--brown);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px;
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+    gap: 10px; box-shadow: 0 3px 10px var(--shadow); flex-shrink: 0; z-index: 10;
+  }
+  .logo { font-size: 2rem; line-height: 1; }
+  #order-btn {
+    background: var(--cream); border: none; border-radius: 50px;
+    padding: 8px 18px; display: flex; align-items: center; gap: 6px;
+    font-size: 1.5rem; font-weight: 900; color: var(--ink); cursor: pointer;
+    box-shadow: 0 4px 0 #8A4418; transition: transform .08s, box-shadow .08s;
+    flex-shrink: 0; min-width: 80px; justify-content: center;
+  }
+  #order-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #8A4418; }
+  #badge {
+    background: var(--pink); color: #fff; border-radius: 50%;
+    min-width: 28px; height: 28px; font-size: 1rem; font-weight: 900;
+    display: flex; align-items: center; justify-content: center; transition: transform .2s;
+  }
+  #badge.pop { animation: pop .3s; }
+  @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.6)} }
+
+  #tabs {
+    display: flex; overflow-x: auto; gap: 8px; padding: 10px 12px;
+    background: #fff; scrollbar-width: none; flex-shrink: 0; border-bottom: 3px solid var(--cream);
+  }
+  #tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    background: var(--cream); border: none; border-radius: 50px; padding: 8px 16px;
+    font-size: 1.4rem; cursor: pointer; white-space: nowrap;
+    transition: background .15s, transform .08s; flex-shrink: 0;
+  }
+  .tab-btn.active { background: var(--brown); transform: scale(1.08); }
+  .tab-btn:active { transform: scale(.93); }
+
+  #menu { flex: 1; overflow-y: auto; padding: 12px; -webkit-overflow-scrolling: touch; }
+  .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .item-btn {
+    background: #fff; border: 3px solid var(--cream); border-radius: 18px;
+    padding: 12px 6px 10px; display: flex; flex-direction: column;
+    align-items: center; gap: 5px; cursor: pointer;
+    transition: transform .1s, border-color .1s, box-shadow .1s;
+    box-shadow: 0 3px 0 #d8c0a0; position: relative;
+    -webkit-user-select: none; user-select: none;
+  }
+  .item-btn:active { transform: scale(.91); box-shadow: 0 1px 0 #d8c0a0; }
+  .item-btn.added { border-color: var(--mint); box-shadow: 0 3px 0 #267a54; animation: shake .25s; }
+  @keyframes shake { 0%,100%{transform:scale(1)} 25%{transform:scale(1.12) rotate(-3deg)} 75%{transform:scale(1.12) rotate(3deg)} }
+  .item-emoji { font-size: 2.5rem; line-height: 1; }
+  .item-price { background: var(--cream); border-radius: 20px; padding: 2px 10px; font-size: 1rem; font-weight: 900; color: var(--ink); }
+
+  .float-up { position: fixed; font-size: 1.8rem; font-weight: 900; color: var(--mint); pointer-events: none; z-index: 999; animation: floatUp .7s ease-out forwards; }
+  @keyframes floatUp { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-70px) scale(1.4)} }
+
+  #order-panel {
+    position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column;
+    background: var(--paper); transform: translateY(100%); transition: transform .35s cubic-bezier(.4,0,.2,1);
+  }
+  #order-panel.open { transform: translateY(0); }
+  .panel-header {
+    background: var(--brown); padding: 14px 16px;
+    padding-top: calc(14px + env(safe-area-inset-top, 0px));
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 3px 10px var(--shadow); flex-shrink: 0;
+  }
+  .panel-title { font-size: 2rem; }
+  .close-btn {
+    background: rgba(255,255,255,.35); border: none; border-radius: 50%;
+    width: 46px; height: 46px; font-size: 1.6rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    margin-left: auto; transition: background .15s, transform .08s; flex-shrink: 0;
+  }
+  .close-btn:active { transform: scale(.88); background: rgba(255,255,255,.6); }
+
+  #order-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; -webkit-overflow-scrolling: touch; }
+  .order-row {
+    background: #fff; border-radius: 16px; padding: 10px 14px;
+    display: flex; align-items: center; gap: 10px;
+    border: 2px solid var(--cream); box-shadow: 0 2px 0 #d8c0a0;
+    animation: slideIn .25s ease-out;
+  }
+  @keyframes slideIn { from{opacity:0;transform:translateX(30px)} to{opacity:1;transform:translateX(0)} }
+  .row-emoji { font-size: 2rem; }
+  .row-price { font-size: 1.1rem; font-weight: 900; color: var(--ink); margin-left: auto; }
+  .qty-ctrl { display: flex; align-items: center; gap: 6px; }
+  .qty-btn {
+    background: var(--brown); border: none; border-radius: 50%;
+    width: 34px; height: 34px; font-size: 1.3rem; color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .08s; font-weight: 900; flex-shrink: 0;
+  }
+  .qty-btn.plus { background: var(--mint); }
+  .qty-btn:active { transform: scale(.85); }
+  .qty-num { font-size: 1.3rem; font-weight: 900; min-width: 20px; text-align: center; }
+  #empty-order { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:#bbb; }
+  #empty-order .big { font-size: 4rem; }
+
+  #total-bar {
+    background: var(--mint); padding: 14px 20px;
+    padding-bottom: calc(14px + var(--safe-bottom));
+    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+  }
+  #total-amount { font-size: 2.2rem; font-weight: 900; color: #fff; letter-spacing: 1px; }
+  #pay-btn {
+    background: var(--cream); border: none; border-radius: 50px;
+    padding: 12px 20px; font-size: 1.8rem; cursor: pointer;
+    box-shadow: 0 4px 0 #8A4418; transition: transform .08s, box-shadow .08s;
+  }
+  #pay-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #8A4418; }
+
+  #receipt-screen {
+    position: fixed; inset: 0; z-index: 200; background: var(--paper);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px; gap: 20px;
+    transform: scale(0.8); opacity: 0; pointer-events: none;
+    transition: transform .35s cubic-bezier(.4,0,.2,1), opacity .35s;
+  }
+  #receipt-screen.open { transform: scale(1); opacity: 1; pointer-events: auto; }
+  .receipt-paper {
+    background: #fff; border-radius: 24px; padding: 28px 24px 24px;
+    width: 100%; max-width: 340px; box-shadow: 0 8px 30px var(--shadow);
+    border: 3px solid var(--cream); display: flex; flex-direction: column; gap: 14px;
+  }
+  .receipt-top { text-align: center; font-size: 3rem; }
+  .receipt-items { display: flex; flex-direction: column; gap: 8px; }
+  .receipt-item { display:flex; align-items:center; gap:10px; font-size:1.5rem; padding:6px 0; border-bottom:1px dashed var(--cream); }
+  .receipt-item:last-child { border-bottom: none; }
+  .ri-emoji { font-size: 1.8rem; }
+  .ri-qty { font-weight: 900; font-size: 1.2rem; color: var(--brown); }
+  .ri-price { margin-left: auto; font-weight: 900; }
+  .receipt-divider { border: none; border-top: 3px dashed var(--cream); }
+  .receipt-total { display:flex; align-items:center; justify-content:space-between; font-size:1.8rem; font-weight:900; }
+  .new-table-btn {
+    background: var(--brown); border: none; border-radius: 50px;
+    padding: 16px 32px; font-size: 2.5rem; cursor: pointer;
+    box-shadow: 0 5px 0 #8A4418; transition: transform .08s, box-shadow .08s;
+  }
+  .new-table-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #8A4418; }
+  .confetti-piece { position:fixed; width:12px; height:12px; border-radius:2px; pointer-events:none; z-index:300; animation:confettiFall linear forwards; }
+  @keyframes confettiFall { 0%{opacity:1;transform:translateY(-20px) rotate(0deg)} 100%{opacity:0;transform:translateY(100vh) rotate(720deg)} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">☕</div>
+    <button id="order-btn" onclick="openPanel()">📋 <span id="badge">0</span></button>
+  </header>
+  <div id="tabs"></div>
+  <div id="menu"><div class="menu-grid" id="grid"></div></div>
+</div>
+
+<div id="order-panel">
+  <div class="panel-header">
+    <span class="panel-title">📋</span>
+    <button class="close-btn" onclick="closePanel()">✕</button>
+  </div>
+  <div id="order-list"></div>
+  <div id="total-bar">
+    <span>🧾</span>
+    <span id="total-amount">0,00€</span>
+    <button id="pay-btn" onclick="showReceipt()">💰</button>
+  </div>
+</div>
+
+<div id="receipt-screen">
+  <div class="receipt-paper">
+    <div class="receipt-top">😋</div>
+    <div class="receipt-items" id="receipt-items"></div>
+    <hr class="receipt-divider">
+    <div class="receipt-total"><span>💶</span><span id="receipt-total-text"></span></div>
+  </div>
+  <button class="new-table-btn" onclick="newTable()">🆕☕</button>
+</div>
+
+<script>
+const MENU = [
+  // Cafés & Bebidas
+  { id:1,  cat:'☕', emoji:'☕',  price:0.80 },
+  { id:2,  cat:'☕', emoji:'🍵',  price:1.00 },
+  { id:3,  cat:'☕', emoji:'🧋',  price:2.50 },
+  { id:4,  cat:'☕', emoji:'🍫',  price:1.50 },
+  { id:5,  cat:'☕', emoji:'🥛',  price:1.00 },
+  { id:6,  cat:'☕', emoji:'🧃',  price:1.20 },
+
+  // Bolos & Pastéis
+  { id:7,  cat:'🥐', emoji:'🥐',  price:1.20 },
+  { id:8,  cat:'🥐', emoji:'🧁',  price:1.80 },
+  { id:9,  cat:'🥐', emoji:'🍰',  price:2.50 },
+  { id:10, cat:'🥐', emoji:'🥧',  price:2.00 },
+  { id:11, cat:'🥐', emoji:'🍩',  price:1.50 },
+  { id:12, cat:'🥐', emoji:'🥮',  price:1.80 },
+
+  // Salgados
+  { id:13, cat:'🥪', emoji:'🥪',  price:2.50 },
+  { id:14, cat:'🥪', emoji:'🌯',  price:3.00 },
+  { id:15, cat:'🥪', emoji:'🥚',  price:2.00 },
+  { id:16, cat:'🥪', emoji:'🧇',  price:3.50 },
+
+  // Gelados
+  { id:17, cat:'🍦', emoji:'🍦',  price:2.00 },
+  { id:18, cat:'🍦', emoji:'🍨',  price:2.50 },
+  { id:19, cat:'🍦', emoji:'🍧',  price:2.50 },
+  { id:20, cat:'🍦', emoji:'🍡',  price:1.50 },
+];
+const CATS = ['☕','🥐','🥪','🍦'];
+let activeCat = '☕';
+let order = {};
+
+function init() { renderTabs(); renderGrid(); }
+function renderTabs() {
+  document.getElementById('tabs').innerHTML = CATS.map(c =>
+    `<button class="tab-btn ${c===activeCat?'active':''}" onclick="switchCat('${c}')">${c}</button>`
+  ).join('');
+}
+function switchCat(cat) { activeCat=cat; renderTabs(); renderGrid(); }
+function renderGrid() {
+  document.getElementById('grid').innerHTML = MENU.filter(i=>i.cat===activeCat).map(item =>
+    `<button class="item-btn" id="item-${item.id}" onclick="addItem(${item.id},event)">
+      <span class="item-emoji">${item.emoji}</span>
+      <span class="item-price">${fmt(item.price)}</span>
+    </button>`
+  ).join('');
+}
+function addItem(id, ev) {
+  order[id]=(order[id]||0)+1;
+  const btn=ev.currentTarget; btn.classList.add('added'); setTimeout(()=>btn.classList.remove('added'),300);
+  const rect=btn.getBoundingClientRect();
+  const fl=document.createElement('div'); fl.className='float-up'; fl.textContent='+1';
+  fl.style.left=(rect.left+rect.width/2-20)+'px'; fl.style.top=rect.top+'px';
+  document.body.appendChild(fl); setTimeout(()=>fl.remove(),700);
+  updateBadge();
+}
+function updateBadge() {
+  const total=Object.values(order).reduce((a,b)=>a+b,0);
+  const badge=document.getElementById('badge');
+  badge.textContent=total; badge.classList.remove('pop'); void badge.offsetWidth; badge.classList.add('pop');
+}
+function openPanel() { renderOrderList(); document.getElementById('order-panel').classList.add('open'); }
+function closePanel() { document.getElementById('order-panel').classList.remove('open'); }
+function renderOrderList() {
+  const list=document.getElementById('order-list');
+  const keys=Object.keys(order).map(Number).filter(id=>order[id]>0);
+  if(!keys.length){list.innerHTML='<div id="empty-order"><span class="big">☕</span></div>'; updateTotalBar(0); return;}
+  let total=0;
+  list.innerHTML=keys.map(id=>{
+    const item=MENU.find(i=>i.id===id); const qty=order[id]; const sub=item.price*qty; total+=sub;
+    return `<div class="order-row">
+      <span class="row-emoji">${item.emoji}</span>
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="changeQty(${id},-1)">−</button>
+        <span class="qty-num">${qty}</span>
+        <button class="qty-btn plus" onclick="changeQty(${id},+1)">+</button>
+      </div>
+      <span class="row-price">${fmt(sub)}</span>
+    </div>`;
+  }).join('');
+  updateTotalBar(total);
+}
+function changeQty(id,delta){order[id]=Math.max(0,(order[id]||0)+delta);if(!order[id])delete order[id];renderOrderList();updateBadge();}
+function updateTotalBar(total){document.getElementById('total-amount').textContent=fmt(total);document.getElementById('pay-btn').style.display=total>0?'':'none';}
+function showReceipt(){
+  const keys=Object.keys(order).map(Number).filter(id=>order[id]>0);if(!keys.length)return;
+  let total=0;
+  document.getElementById('receipt-items').innerHTML=keys.map(id=>{
+    const item=MENU.find(i=>i.id===id);const qty=order[id];const sub=item.price*qty;total+=sub;
+    return `<div class="receipt-item"><span class="ri-emoji">${item.emoji}</span><span class="ri-qty">×${qty}</span><span class="ri-price">${fmt(sub)}</span></div>`;
+  }).join('');
+  document.getElementById('receipt-total-text').textContent=fmt(total);
+  closePanel();document.getElementById('receipt-screen').classList.add('open');launchConfetti();
+}
+function newTable(){document.getElementById('receipt-screen').classList.remove('open');order={};updateBadge();renderGrid();}
+function launchConfetti(){
+  ['#C0622A','#F5E6C8','#E8507A','#3BAB7A','#fff','#8A4418'].forEach(color=>{
+    for(let i=0;i<8;i++){
+      const el=document.createElement('div');el.className='confetti-piece';
+      el.style.left=Math.random()*100+'vw';el.style.background=color;
+      el.style.animationDuration=(1.5+Math.random()*2)+'s';el.style.animationDelay=(Math.random()*.5)+'s';
+      document.body.appendChild(el);setTimeout(()=>el.remove(),4000);
+    }
+  });
+}
+function fmt(v){return v.toFixed(2).replace('.',',')+'€';}
+if('serviceWorker' in navigator){
+  const sw=`const C='pastelaria-v1';self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['/jogos-criancas/cafe.html'])));self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const blob=new Blob([sw],{type:'text/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob));
+}
+init();
+</script>
+</body>
+</html>
