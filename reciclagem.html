@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Reciclar">
+<meta name="theme-color" content="#4CAF50">
+<title>♻️ Reciclar!</title>
+<style>
+:root{
+  --yellow:#FDD835; --blue:#1E88E5; --green:#43A047;
+  --yellow-d:#F9A825; --blue-d:#1565C0; --green-d:#2E7D32;
+  --yellow-l:#FFF9C4; --blue-l:#BBDEFB; --green-l:#C8E6C9;
+  --sky1:#87CEEB; --sky2:#E0F7FA;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;width:100%;overflow:hidden;
+  background:linear-gradient(180deg,#87CEEB 0%,#E0F7FA 60%,#A5D6A7 100%);
+  font-family:'Helvetica Neue',Arial,sans-serif;
+  touch-action:none;
+}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh;}
+
+/* ── TOP BAR ── */
+#topbar{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 14px;
+  padding-top:calc(8px + var(--safe-top));
+  background:rgba(255,255,255,.45);
+  backdrop-filter:blur(10px);
+  flex-shrink:0;
+  z-index:20;
+  border-bottom:2px solid rgba(255,255,255,.6);
+}
+#score-box{
+  background:linear-gradient(135deg,#43A047,#2E7D32);
+  color:#fff;border-radius:50px;
+  padding:6px 16px;font-size:1.4rem;font-weight:900;
+  box-shadow:0 3px 10px rgba(0,0,0,.2);
+  min-width:80px;text-align:center;
+  display:flex;align-items:center;gap:6px;
+}
+#combo-box{
+  background:linear-gradient(135deg,#FDD835,#F9A825);
+  color:#3E2723;border-radius:50px;
+  padding:5px 12px;font-size:1.1rem;font-weight:900;
+  box-shadow:0 3px 10px rgba(0,0,0,.15);
+  display:none;
+}
+#combo-box.show{display:block;animation:comboPop .3s;}
+@keyframes comboPop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+/* timer */
+#timer-wrap{flex:1;display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+#timer-label{font-size:1.2rem;font-weight:900;color:#1a1a1a;}
+#timer-bar-bg{
+  width:100%;max-width:160px;height:12px;
+  background:rgba(0,0,0,.15);border-radius:10px;overflow:hidden;
+}
+#timer-bar{
+  height:100%;width:100%;
+  background:linear-gradient(90deg,#4CAF50,#8BC34A);
+  border-radius:10px;
+  transition:width .1s linear, background .5s;
+}
+#timer-bar.urgent{background:linear-gradient(90deg,#F44336,#FF5722);}
+
+/* ── SCENE ── */
+#scene{
+  flex:1;position:relative;overflow:hidden;
+  display:flex;align-items:flex-end;justify-content:space-around;
+}
+
+/* clouds decoration */
+.cloud{position:absolute;background:#fff;border-radius:50px;opacity:.7;pointer-events:none;}
+
+/* score flash */
+#score-flash{
+  position:absolute;top:20%;left:50%;
+  transform:translateX(-50%);
+  font-size:2.8rem;font-weight:900;
+  pointer-events:none;z-index:50;
+  display:none;
+}
+#score-flash.show{display:block;animation:scoreFloat 1s ease-out forwards;}
+@keyframes scoreFloat{0%{opacity:1;transform:translateX(-50%) scale(1) translateY(0)}100%{opacity:0;transform:translateX(-50%) scale(1.4) translateY(-60px)}}
+
+/* ── TRASH ITEM (draggable) ── */
+#trash-wrap{
+  position:absolute;
+  top:30%;left:50%;
+  transform:translate(-50%,-50%);
+  z-index:30;
+  cursor:grab;
+  touch-action:none;
+  user-select:none;-webkit-user-select:none;
+  display:none;
+}
+#trash-wrap.show{display:block;animation:itemEnter .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes itemEnter{0%{transform:translate(-50%,-50%) scale(0) rotate(-10deg)}100%{transform:translate(-50%,-50%) scale(1) rotate(0deg)}}
+#trash-wrap.dragging{cursor:grabbing;z-index:100;}
+#trash-svg{
+  width:min(22vw,100px);
+  height:min(22vw,100px);
+  display:block;
+  filter:drop-shadow(0 6px 12px rgba(0,0,0,.25));
+  transition:filter .15s;
+}
+#trash-wrap.dragging #trash-svg{
+  filter:drop-shadow(0 12px 24px rgba(0,0,0,.35)) drop-shadow(0 0 20px rgba(255,255,255,.4));
+  transform:scale(1.12);
+}
+
+/* difficulty badge */
+#diff-badge{
+  position:absolute;top:-8px;right:-8px;
+  width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;font-weight:900;color:#fff;
+  box-shadow:0 2px 6px rgba(0,0,0,.3);
+}
+
+/* ── BINS ── */
+.bin-wrap{
+  position:relative;
+  flex:1;
+  display:flex;flex-direction:column;align-items:center;
+  padding-bottom:calc(8px + var(--safe-bottom));
+  z-index:10;
+}
+.bin-svg{
+  width:min(28vw,110px);
+  height:auto;
+  display:block;
+  transition:transform .15s;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.2));
+}
+.bin-wrap.highlight .bin-svg{transform:scale(1.12);}
+.bin-wrap.correct .bin-svg{animation:binBounce .5s;}
+.bin-wrap.wrong .bin-svg{animation:binShake .4s;}
+@keyframes binBounce{0%,100%{transform:scale(1)}30%{transform:scale(1.25) translateY(-12px)}60%{transform:scale(.95)}}
+@keyframes binShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+
+.bin-label{
+  font-size:1.6rem;margin-top:4px;
+  text-align:center;line-height:1;
+}
+
+/* bin highlight ring */
+.bin-wrap.highlight::after{
+  content:'';position:absolute;
+  inset:-6px;border-radius:12px;
+  border:4px solid rgba(255,255,255,.9);
+  animation:ringPulse .6s ease-in-out infinite alternate;
+  pointer-events:none;
+  z-index:1;
+}
+@keyframes ringPulse{0%{opacity:.5;transform:scale(.97)}100%{opacity:1;transform:scale(1.04)}}
+
+/* particles */
+.particle{
+  position:absolute;
+  pointer-events:none;z-index:60;
+  border-radius:50%;
+  animation:partFly linear forwards;
+}
+@keyframes partFly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:var(--dx) scale(0)}}
+
+/* wrong flash overlay */
+#wrong-flash{
+  position:fixed;inset:0;z-index:80;
+  background:rgba(244,67,54,.25);
+  pointer-events:none;opacity:0;
+  transition:opacity .1s;
+}
+#wrong-flash.on{opacity:1;}
+
+/* ── START / END SCREENS ── */
+.screen{
+  position:fixed;inset:0;z-index:200;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;
+  background:radial-gradient(ellipse at center,rgba(67,160,71,.95),rgba(20,60,20,.98));
+  transition:opacity .5s;
+}
+.screen.hidden{opacity:0;pointer-events:none;}
+.screen-title{font-size:2.6rem;font-weight:900;color:#FFD700;text-shadow:0 3px 10px rgba(0,0,0,.4);text-align:center;}
+.screen-sub{font-size:1.1rem;color:rgba(255,255,255,.85);text-align:center;max-width:300px;}
+.big-btn{
+  background:linear-gradient(135deg,#FFD700,#F9A825);
+  border:none;border-radius:50px;
+  padding:16px 40px;font-size:2rem;
+  cursor:pointer;color:#3E2723;font-weight:900;
+  box-shadow:0 6px 0 #E65100, 0 8px 20px rgba(0,0,0,.3);
+  transition:transform .1s,box-shadow .1s;
+}
+.big-btn:active{transform:translateY(4px);box-shadow:0 2px 0 #E65100;}
+
+#end-score{font-size:3.5rem;font-weight:900;color:#FFD700;text-shadow:0 0 30px rgba(255,215,0,.6);}
+#end-stars{font-size:2.5rem;letter-spacing:6px;}
+#end-msg{font-size:1.2rem;color:#C8E6C9;text-align:center;max-width:280px;}
+
+/* bin labels */
+#bin-y .bin-svg{ }
+#bin-b .bin-svg{ }
+#bin-g .bin-svg{ }
+
+/* confetti */
+.cpiece{position:fixed;pointer-events:none;z-index:300;animation:cfall linear forwards;}
+@keyframes cfall{0%{opacity:1;transform:translateY(-10px) rotate(0)}100%{opacity:0;transform:translateY(100vh) rotate(540deg)}}
+
+/* flash */
+#gflash{position:fixed;inset:0;z-index:190;background:#fff;opacity:0;pointer-events:none;transition:opacity .1s;}
+#gflash.on{opacity:.5;}
+</style>
+</head>
+<body>
+
+<!-- START SCREEN -->
+<div class="screen" id="start-screen">
+  <div style="font-size:5rem">♻️</div>
+  <div class="screen-title">Vamos Reciclar!</div>
+  <div class="screen-sub">Arrasta o lixo para o caixote certo antes do tempo acabar!</div>
+  <div style="display:flex;gap:16px;font-size:2rem">🟡 🔵 🟢</div>
+  <button class="big-btn" onclick="startGame()">▶️ Jogar</button>
+</div>
+
+<!-- END SCREEN -->
+<div class="screen hidden" id="end-screen">
+  <div style="font-size:4rem">♻️</div>
+  <div class="screen-title">Muito bem!</div>
+  <div id="end-score">0</div>
+  <div id="end-stars">⭐</div>
+  <div id="end-msg"></div>
+  <button class="big-btn" onclick="startGame()">🔄 Jogar outra vez</button>
+</div>
+
+<div id="app">
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div id="score-box">♻️ <span id="score-val">0</span></div>
+    <div id="combo-box" id="combo-box">🔥 x<span id="combo-val">2</span></div>
+    <div id="timer-wrap">
+      <div id="timer-label">3:00</div>
+      <div id="timer-bar-bg"><div id="timer-bar"></div></div>
+    </div>
+  </div>
+
+  <!-- SCENE -->
+  <div id="scene">
+    <!-- Clouds -->
+    <div class="cloud" style="width:90px;height:30px;top:8%;left:5%"></div>
+    <div class="cloud" style="width:60px;height:20px;top:12%;left:18%"></div>
+    <div class="cloud" style="width:110px;height:35px;top:6%;right:8%"></div>
+    <div class="cloud" style="width:70px;height:22px;top:16%;right:22%"></div>
+
+    <!-- Score flash -->
+    <div id="score-flash"></div>
+
+    <!-- DRAGGABLE TRASH ITEM -->
+    <div id="trash-wrap">
+      <svg id="trash-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="diff-badge"></div>
+    </div>
+
+    <!-- BINS -->
+    <div class="bin-wrap" id="bin-y" data-bin="yellow">
+      <svg class="bin-svg" viewBox="0 0 110 130" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gyb" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#FFF176"/>
+            <stop offset="100%" stop-color="#FDD835"/>
+          </linearGradient>
+        </defs>
+        <!-- lid -->
+        <rect x="8" y="22" width="94" height="14" rx="6" fill="#F9A825"/>
+        <rect x="36" y="10" width="38" height="16" rx="6" fill="#F57F17"/>
+        <!-- body -->
+        <path d="M14,36 L18,124 Q18,128 22,128 L88,128 Q92,128 92,124 L96,36Z" fill="url(#gyb)"/>
+        <!-- shade -->
+        <path d="M22,36 L26,124 Q26,127 29,127 L22,127 Q18,127 18,124 L14,36Z" fill="rgba(0,0,0,.08)"/>
+        <!-- lines -->
+        <line x1="40" y1="40" x2="40" y2="122" stroke="rgba(0,0,0,.1)" stroke-width="2"/>
+        <line x1="70" y1="40" x2="70" y2="122" stroke="rgba(0,0,0,.1)" stroke-width="2"/>
+        <!-- symbol -->
+        <text x="55" y="95" text-anchor="middle" font-size="28" fill="rgba(0,0,0,.18)" font-weight="900">♻</text>
+      </svg>
+      <div class="bin-label">🟡</div>
+    </div>
+
+    <div class="bin-wrap" id="bin-b" data-bin="blue">
+      <svg class="bin-svg" viewBox="0 0 110 130" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gbb" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#90CAF9"/>
+            <stop offset="100%" stop-color="#1E88E5"/>
+          </linearGradient>
+        </defs>
+        <rect x="8" y="22" width="94" height="14" rx="6" fill="#1565C0"/>
+        <rect x="36" y="10" width="38" height="16" rx="6" fill="#0D47A1"/>
+        <path d="M14,36 L18,124 Q18,128 22,128 L88,128 Q92,128 92,124 L96,36Z" fill="url(#gbb)"/>
+        <path d="M22,36 L26,124 Q26,127 29,127 L22,127 Q18,127 18,124 L14,36Z" fill="rgba(0,0,0,.08)"/>
+        <line x1="40" y1="40" x2="40" y2="122" stroke="rgba(0,0,0,.1)" stroke-width="2"/>
+        <line x1="70" y1="40" x2="70" y2="122" stroke="rgba(0,0,0,.1)" stroke-width="2"/>
+        <text x="55" y="95" text-anchor="middle" font-size="28" fill="rgba(0,0,0,.15)" font-weight="900">♻</text>
+      </svg>
+      <div class="bin-label">🔵</div>
+    </div>
+
+    <div class="bin-wrap" id="bin-g" data-bin="green">
+      <svg class="bin-svg" viewBox="0 0 110 130" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="ggb" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#A5D6A7"/>
+            <stop offset="100%" stop-color="#43A047"/>
+          </linearGradient>
+        </defs>
+        <rect x="8" y="22" width="94" height="14" rx="6" fill="#2E7D32"/>
+        <rect x="36" y="10" width="38" height="16" rx="6" fill="#1B5E20"/>
+        <path d="M14,36 L18,124 Q18,128 22,128 L88,128 Q92,128 92,124 L96,36Z" fill="url(#ggb)"/>
+        <path d="M22,36 L26,124 Q26,127 29,127 L22,127 Q18,127 18,124 L14,36Z" fill="rgba(0,0,0,.08)"/>
+        <line x1="40" y1="40" x2="40" y2="122" stroke="rgba(0,0,0,.1)" stroke-width="2"/>
+        <line x1="70" y1="40" x2="70" y2="122" stroke="rgba(0,0,0,.1)" stroke-width="2"/>
+        <text x="55" y="95" text-anchor="middle" font-size="28" fill="rgba(0,0,0,.12)" font-weight="900">♻</text>
+      </svg>
+      <div class="bin-label">🟢</div>
+    </div>
+  </div>
+</div>
+
+<div id="wrong-flash"></div>
+<div id="gflash"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// PRODUCT DATABASE
+// bin: yellow=plástico/metal  blue=papel/cartão  green=vidro/orgânico
+// pts: 1=fácil 2=médio 3=difícil
+// ══════════════════════════════════════════════════════
+const ITEMS = [
+  // ── YELLOW (plástico / embalagens / metal) ──
+  { id:'bottle-plastic', bin:'yellow', pts:1, label:'🧴',
+    svg:`<rect x="30" y="15" width="40" height="8" rx="4" fill="#90CAF9"/>
+         <path d="M20,23 Q20,18 25,18 L85,18 Q90,18 90,23 L88,88 Q88,94 82,94 L28,94 Q22,94 22,88Z" fill="#81D4FA"/>
+         <rect x="22" y="50" width="66" height="3" rx="2" fill="rgba(255,255,255,.4)"/>
+         <rect x="28" y="58" width="54" height="20" rx="4" fill="rgba(255,255,255,.25)"/>
+         <text x="55" y="74" text-anchor="middle" font-size="11" fill="#1565C0" font-weight="bold">SHAMPOO</text>
+         <ellipse cx="55" cy="92" rx="32" ry="4" fill="rgba(0,0,0,.1)"/>` },
+  { id:'can', bin:'yellow', pts:1, label:'🥫',
+    svg:`<rect x="22" y="20" width="56" height="66" rx="8" fill="#EF5350"/>
+         <rect x="22" y="20" width="56" height="10" rx="8" fill="#B71C1C"/>
+         <rect x="22" y="76" width="56" height="10" rx="8" fill="#B71C1C"/>
+         <rect x="28" y="35" width="44" height="28" rx="3" fill="#FFF8E7"/>
+         <text x="50" y="54" text-anchor="middle" font-size="10" fill="#B71C1C" font-weight="bold">FEIJÃO</text>
+         <path d="M38,18 Q50,12 62,18" stroke="#9E9E9E" stroke-width="3" fill="none" stroke-linecap="round"/>` },
+  { id:'plastic-bag', bin:'yellow', pts:2, label:'🛍️',
+    svg:`<path d="M30,30 Q28,20 35,18 Q50,14 65,18 Q72,20 70,30 L80,82 Q80,88 74,88 L26,88 Q20,88 20,82Z" fill="#E1F5FE" stroke="#90CAF9" stroke-width="2"/>
+         <path d="M38,18 Q38,10 42,8 Q50,5 58,8 Q62,10 62,18" stroke="#90CAF9" stroke-width="3" fill="none"/>
+         <ellipse cx="50" cy="58" rx="18" ry="14" fill="rgba(144,202,249,.3)"/>` },
+  { id:'yogurt', bin:'yellow', pts:2, label:'🥛',
+    svg:`<path d="M28,32 L32,88 Q32,92 36,92 L64,92 Q68,92 68,88 L72,32Z" fill="#FFF3E0"/>
+         <rect x="26" y="25" width="48" height="10" rx="5" fill="#FFB74D"/>
+         <rect x="30" y="40" width="40" height="30" rx="3" fill="rgba(255,183,77,.2)"/>
+         <text x="50" y="60" text-anchor="middle" font-size="9" fill="#E65100" font-weight="bold">IOGURTE</text>
+         <path d="M35,25 Q50,20 65,25" stroke="rgba(255,255,255,.5)" stroke-width="2" fill="none"/>` },
+  { id:'tin-foil', bin:'yellow', pts:3, label:'🥡',
+    svg:`<rect x="18" y="35" width="64" height="42" rx="6" fill="#CFD8DC"/>
+         <rect x="18" y="35" width="64" height="8" rx="6" fill="#B0BEC5"/>
+         <rect x="24" y="43" width="52" height="28" rx="4" fill="rgba(255,255,255,.3)"/>
+         <path d="M18,47 L82,47" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>
+         <path d="M18,53 L82,53" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
+         <text x="50" y="66" text-anchor="middle" font-size="9" fill="#546E7A" font-weight="bold">ALUMÍNIO</text>` },
+
+  // ── BLUE (papel / cartão) ──
+  { id:'newspaper', bin:'blue', pts:1, label:'📰',
+    svg:`<rect x="12" y="18" width="76" height="68" rx="4" fill="#FFF8E7" stroke="#E0E0E0" stroke-width="2"/>
+         <rect x="18" y="24" width="64" height="12" rx="2" fill="#263238"/>
+         <rect x="18" y="40" width="30" height="4" rx="1" fill="#9E9E9E"/>
+         <rect x="18" y="48" width="30" height="4" rx="1" fill="#9E9E9E"/>
+         <rect x="18" y="56" width="30" height="4" rx="1" fill="#9E9E9E"/>
+         <rect x="52" y="40" width="30" height="24" rx="2" fill="#E3F2FD"/>
+         <text x="67" y="56" text-anchor="middle" font-size="18" fill="#90CAF9">🌤</text>` },
+  { id:'cardboard', bin:'blue', pts:1, label:'📦',
+    svg:`<path d="M10,38 L50,22 L90,38 L90,82 L50,82 L10,82Z" fill="#8D6E63"/>
+         <path d="M10,38 L50,54 L90,38" fill="#6D4C41"/>
+         <path d="M50,22 L50,54 L50,82" stroke="#5D4037" stroke-width="1.5" fill="none"/>
+         <path d="M30,30 Q50,26 70,30" stroke="#A1887F" stroke-width="2" fill="none"/>
+         <rect x="38" y="55" width="24" height="16" rx="2" fill="rgba(0,0,0,.12)"/>` },
+  { id:'magazine', bin:'blue', pts:2, label:'📖',
+    svg:`<rect x="15" y="12" width="70" height="86" rx="4" fill="#E91E63" stroke="#C2185B" stroke-width="2"/>
+         <rect x="20" y="18" width="60" height="35" rx="2" fill="#F8BBD9"/>
+         <text x="50" y="42" text-anchor="middle" font-size="22">🌸</text>
+         <rect x="20" y="58" width="60" height="5" rx="2" fill="rgba(255,255,255,.4)"/>
+         <rect x="20" y="67" width="40" height="5" rx="2" fill="rgba(255,255,255,.3)"/>
+         <rect x="20" y="76" width="50" height="5" rx="2" fill="rgba(255,255,255,.3)"/>` },
+  { id:'pizza-box', bin:'blue', pts:2, label:'🍕',
+    svg:`<rect x="8" y="30" width="84" height="52" rx="5" fill="#8D6E63"/>
+         <rect x="8" y="30" width="84" height="8" rx="5" fill="#6D4C41"/>
+         <rect x="8" y="38" width="84" height="2" fill="#5D4037"/>
+         <path d="M30,30 Q50,24 70,30 L66,30 L50,20 L34,30Z" fill="#6D4C41"/>
+         <text x="50" y="62" text-anchor="middle" font-size="24">🍕</text>
+         <rect x="35" y="72" width="30" height="4" rx="2" fill="rgba(0,0,0,.2)"/>` },
+  { id:'egg-carton', bin:'blue', pts:3, label:'🥚',
+    svg:`<rect x="10" y="35" width="80" height="38" rx="5" fill="#A5D6A7"/>
+         <rect x="10" y="35" width="80" height="8" rx="5" fill="#81C784"/>
+         <ellipse cx="28" cy="52" rx="10" ry="7" fill="#66BB6A"/>
+         <ellipse cx="50" cy="52" rx="10" ry="7" fill="#66BB6A"/>
+         <ellipse cx="72" cy="52" rx="10" ry="7" fill="#66BB6A"/>
+         <ellipse cx="28" cy="52" rx="6" ry="4" fill="#A5D6A7"/>
+         <ellipse cx="50" cy="52" rx="6" ry="4" fill="#A5D6A7"/>
+         <ellipse cx="72" cy="52" rx="6" ry="4" fill="#A5D6A7"/>
+         <text x="50" y="82" text-anchor="middle" font-size="9" fill="#2E7D32" font-weight="bold">OVOS</text>` },
+
+  // ── GREEN (vidro / orgânico) ──
+  { id:'glass-bottle', bin:'green', pts:1, label:'🍾',
+    svg:`<path d="M38,15 L38,35 Q20,42 18,58 L18,86 Q18,92 24,92 L76,92 Q82,92 82,86 L82,58 Q80,42 62,35 L62,15Z" fill="#A5D6A7"/>
+         <rect x="36" y="10" width="28" height="8" rx="4" fill="#81C784"/>
+         <rect x="40" y="6" width="20" height="6" rx="3" fill="#388E3C"/>
+         <path d="M22,60 Q50,56 78,60" stroke="rgba(255,255,255,.4)" stroke-width="2" fill="none"/>
+         <path d="M20,72 Q50,68 80,72" stroke="rgba(255,255,255,.3)" stroke-width="2" fill="none"/>
+         <ellipse cx="50" cy="90" rx="30" ry="4" fill="rgba(0,0,0,.1)"/>` },
+  { id:'jam-jar', bin:'green', pts:1, label:'🫙',
+    svg:`<rect x="24" y="26" width="52" height="58" rx="6" fill="#FFCC80"/>
+         <rect x="22" y="22" width="56" height="10" rx="5" fill="#8D6E63"/>
+         <rect x="26" y="32" width="48" height="3" fill="rgba(255,255,255,.3)"/>
+         <ellipse cx="50" cy="55" rx="18" ry="16" fill="#FFA726"/>
+         <text x="50" y="60" text-anchor="middle" font-size="18">🍓</text>
+         <rect x="30" y="72" width="40" height="6" rx="3" fill="rgba(255,255,255,.3)"/>` },
+  { id:'apple', bin:'green', pts:1, label:'🍎',
+    svg:`<path d="M50,18 Q70,18 76,35 Q84,52 78,68 Q72,84 58,88 Q52,90 50,88 Q48,90 42,88 Q28,84 22,68 Q16,52 24,35 Q30,18 50,18Z" fill="#F44336"/>
+         <path d="M50,18 Q52,10 60,8" stroke="#4CAF50" stroke-width="3" fill="none" stroke-linecap="round"/>
+         <ellipse cx="38" cy="42" rx="8" ry="12" fill="rgba(255,255,255,.25)" transform="rotate(-20,38,42)"/>` },
+  { id:'wine-bottle', bin:'green', pts:2, label:'🍷',
+    svg:`<path d="M40,15 L40,38 Q24,46 22,62 L22,88 Q22,94 28,94 L72,94 Q78,94 78,88 L78,62 Q76,46 60,38 L60,15Z" fill="#6A1B9A"/>
+         <rect x="38" y="8" width="24" height="10" rx="4" fill="#4A148C"/>
+         <rect x="42" y="4" width="16" height="6" rx="3" fill="#311B92"/>
+         <rect x="30" y="62" width="40" height="22" rx="3" fill="rgba(255,255,255,.2)"/>
+         <text x="50" y="77" text-anchor="middle" font-size="9" fill="#fff" font-weight="bold">VINHO</text>` },
+  { id:'banana-peel', bin:'green', pts:2, label:'🍌',
+    svg:`<path d="M20,70 Q24,40 50,22 Q70,10 78,28 Q82,40 64,52 Q44,64 40,82 Q36,90 28,82 Z" fill="#FDD835"/>
+         <path d="M20,70 Q24,40 50,22" stroke="#F9A825" stroke-width="3" fill="none"/>
+         <path d="M50,22 Q70,10 78,28" stroke="#F9A825" stroke-width="2" fill="none"/>` },
+  { id:'broken-glass', bin:'green', pts:3, label:'🔮',
+    svg:`<polygon points="50,15 65,35 80,32 70,50 82,65 60,58 55,78 45,58 22,65 32,50 18,35 38,38" fill="#80DEEA" stroke="#00ACC1" stroke-width="2"/>
+         <line x1="50" y1="15" x2="45" y2="58" stroke="rgba(255,255,255,.5)" stroke-width="1.5"/>
+         <line x1="65" y1="35" x2="22" y2="65" stroke="rgba(255,255,255,.4)" stroke-width="1"/>
+         <ellipse cx="44" cy="36" rx="8" ry="5" fill="rgba(255,255,255,.4)" transform="rotate(-30,44,36)"/>` },
+  { id:'coffee-cup', bin:'green', pts:2, label:'☕',
+    svg:`<path d="M18,30 L22,82 Q22,88 28,88 L72,88 Q78,88 78,82 L82,30Z" fill="#6D4C41"/>
+         <rect x="16" y="28" width="68" height="8" rx="4" fill="#4E342E"/>
+         <path d="M78,42 Q92,42 92,55 Q92,68 78,68" stroke="#4E342E" stroke-width="6" fill="none" stroke-linecap="round"/>
+         <rect x="30" y="38" width="40" height="6" rx="3" fill="rgba(255,255,255,.15)"/>` },
+  { id:'perfume', bin:'yellow', pts:3, label:'💐',
+    svg:`<rect x="34" y="22" width="32" height="58" rx="6" fill="#CE93D8" stroke="#AB47BC" stroke-width="2"/>
+         <rect x="38" y="15" width="24" height="10" rx="4" fill="#AB47BC"/>
+         <rect x="44" y="8" width="12" height="10" rx="3" fill="#7B1FA2"/>
+         <rect x="40" y="36" width="20" height="28" rx="3" fill="rgba(255,255,255,.2)"/>
+         <text x="50" y="54" text-anchor="middle" font-size="14">💐</text>` },
+  { id:'tetra-pak', bin:'yellow', pts:3, label:'🥤',
+    svg:`<path d="M22,28 L34,16 L76,16 L88,28 L88,88 Q88,92 84,92 L26,92 Q22,92 22,88Z" fill="#A5D6A7" stroke="#66BB6A" stroke-width="2"/>
+         <path d="M22,28 L88,28" stroke="#66BB6A" stroke-width="2"/>
+         <path d="M34,16 L76,16 L88,28 L34,28Z" fill="#66BB6A"/>
+         <rect x="30" y="38" width="50" height="34" rx="3" fill="rgba(255,255,255,.25)"/>
+         <text x="55" y="58" text-anchor="middle" font-size="18">🥛</text>
+         <rect x="35" y="76" width="40" height="5" rx="2" fill="rgba(255,255,255,.3)"/>` },
+];
+
+// ══════════════════════════════════════════════════════
+// GAME STATE
+// ══════════════════════════════════════════════════════
+const GAME_DURATION = 180; // seconds
+let score=0, combo=0, timeLeft=GAME_DURATION;
+let timerInterval=null, gameActive=false;
+let currentItem=null;
+let dragActive=false, dragStartX=0, dragStartY=0, origX=0, origY=0;
+let itemQueue=[];
+
+const trashWrap = document.getElementById('trash-wrap');
+const trashSvg  = document.getElementById('trash-svg');
+const diffBadge = document.getElementById('diff-badge');
+const scoreVal  = document.getElementById('score-val');
+const comboBox  = document.getElementById('combo-box');
+const comboVal  = document.getElementById('combo-val');
+const timerLabel= document.getElementById('timer-label');
+const timerBar  = document.getElementById('timer-bar');
+const scoreFlash= document.getElementById('score-flash');
+
+// ══════════════════════════════════════════════════════
+// GAME FLOW
+// ══════════════════════════════════════════════════════
+function startGame(){
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('end-screen').classList.add('hidden');
+  score=0; combo=0; timeLeft=GAME_DURATION;
+  gameActive=true;
+  scoreVal.textContent='0';
+  comboBox.classList.remove('show');
+  timerBar.classList.remove('urgent');
+  timerBar.style.width='100%';
+  itemQueue=shuffleItems();
+  clearInterval(timerInterval);
+  timerInterval=setInterval(tick,100);
+  nextItem();
+}
+
+function tick(){
+  timeLeft=Math.max(0,timeLeft-.1);
+  const pct=timeLeft/GAME_DURATION;
+  timerBar.style.width=(pct*100)+'%';
+  if(pct<.25) timerBar.classList.add('urgent');
+  const mins=Math.floor(timeLeft/60);
+  const secs=Math.floor(timeLeft%60);
+  timerLabel.textContent=`${mins}:${secs.toString().padStart(2,'0')}`;
+  if(timeLeft<=0) endGame();
+}
+
+function endGame(){
+  clearInterval(timerInterval);
+  gameActive=false;
+  trashWrap.classList.remove('show');
+  trashWrap.style.display='none';
+  // clear bin highlights
+  document.querySelectorAll('.bin-wrap').forEach(b=>{b.classList.remove('highlight','correct','wrong');});
+
+  setTimeout(()=>{
+    const stars = score>=80?'⭐⭐⭐':score>=40?'⭐⭐':score>=15?'⭐':'';
+    const msg = score>=80?'Incrível! És uma campeã da reciclagem! 🌍':
+                score>=40?'Muito bem! Continua assim! 💪':
+                score>=15?'Boa tentativa! Pratica mais! 🌱':
+                'Continua a tentar! Consegues! 🌿';
+    document.getElementById('end-score').textContent=score+' pts';
+    document.getElementById('end-stars').textContent=stars||'🌱';
+    document.getElementById('end-msg').textContent=msg;
+    document.getElementById('end-screen').classList.remove('hidden');
+    if(score>=40) launchConfetti();
+  },400);
+}
+
+// ══════════════════════════════════════════════════════
+// ITEMS
+// ══════════════════════════════════════════════════════
+function shuffleItems(){
+  // create infinite-ish pool by repeating and shuffling
+  const pool=[];
+  for(let i=0;i<6;i++) pool.push(...ITEMS);
+  return pool.sort(()=>Math.random()-.5);
+}
+
+function nextItem(){
+  if(!gameActive) return;
+  if(itemQueue.length<3) itemQueue.push(...shuffleItems());
+  currentItem=itemQueue.shift();
+
+  // difficulty-based timing — harder items show for less time as game progresses
+  const elapsed=(GAME_DURATION-timeLeft)/GAME_DURATION;
+
+  // render
+  trashSvg.innerHTML=currentItem.svg;
+  diffBadge.textContent=currentItem.pts===1?'':'★'.repeat(currentItem.pts);
+  diffBadge.style.background=currentItem.pts===1?'#66BB6A':currentItem.pts===2?'#FFA000':'#E53935';
+  diffBadge.style.display=currentItem.pts>1?'flex':'none';
+
+  // reset position to centre
+  trashWrap.style.left='50%';
+  trashWrap.style.top='38%';
+  trashWrap.style.transform='translate(-50%,-50%)';
+  trashWrap.classList.remove('show','dragging');
+  trashWrap.style.display='block';
+  void trashWrap.offsetWidth;
+  trashWrap.classList.add('show');
+}
+
+// ══════════════════════════════════════════════════════
+// DRAG
+// ══════════════════════════════════════════════════════
+function getPos(e){ return e.touches?{x:e.touches[0].clientX,y:e.touches[0].clientY}:{x:e.clientX,y:e.clientY}; }
+
+trashWrap.addEventListener('mousedown', startDrag);
+trashWrap.addEventListener('touchstart', startDrag, {passive:false});
+
+function startDrag(e){
+  if(!gameActive||!currentItem) return;
+  e.preventDefault();
+  dragActive=true;
+  trashWrap.classList.add('dragging');
+  const pos=getPos(e);
+  const r=trashWrap.getBoundingClientRect();
+  dragStartX=pos.x; dragStartY=pos.y;
+  origX=r.left+r.width/2; origY=r.top+r.height/2;
+}
+
+window.addEventListener('mousemove', onDrag);
+window.addEventListener('touchmove', onDrag, {passive:false});
+window.addEventListener('mouseup',   endDrag);
+window.addEventListener('touchend',  endDrag);
+
+function onDrag(e){
+  if(!dragActive) return;
+  e.preventDefault();
+  const pos=getPos(e);
+  const dx=pos.x-dragStartX, dy=pos.y-dragStartY;
+  trashWrap.style.left=(origX+dx)+'px';
+  trashWrap.style.top =(origY+dy)+'px';
+  trashWrap.style.transform='translate(-50%,-50%)';
+
+  // highlight nearest bin
+  const bins=document.querySelectorAll('.bin-wrap');
+  bins.forEach(b=>{
+    const r=b.getBoundingClientRect();
+    const cx=r.left+r.width/2, cy=r.top+r.height/2;
+    const dist=Math.hypot(pos.x-cx,pos.y-cy);
+    b.classList.toggle('highlight', dist<r.width*.9);
+  });
+}
+
+function endDrag(e){
+  if(!dragActive) return;
+  dragActive=false;
+  trashWrap.classList.remove('dragging');
+  document.querySelectorAll('.bin-wrap').forEach(b=>b.classList.remove('highlight'));
+
+  const pos=e.changedTouches?{x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY}:{x:e.clientX,y:e.clientY};
+
+  // check which bin (if any)
+  let droppedBin=null;
+  document.querySelectorAll('.bin-wrap').forEach(b=>{
+    const r=b.getBoundingClientRect();
+    if(pos.x>=r.left&&pos.x<=r.right&&pos.y>=r.top&&pos.y<=r.bottom){
+      droppedBin=b;
+    }
+  });
+
+  if(!droppedBin){
+    // snapped back
+    trashWrap.style.left='50%';
+    trashWrap.style.top='38%';
+    trashWrap.style.transform='translate(-50%,-50%)';
+    trashWrap.style.transition='left .3s,top .3s';
+    setTimeout(()=>trashWrap.style.transition='',350);
+    return;
+  }
+
+  // evaluate
+  const droppedBinType=droppedBin.dataset.bin;
+  if(droppedBinType===currentItem.bin){
+    onCorrect(droppedBin, pos);
+  } else {
+    onWrong(droppedBin);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// FEEDBACK
+// ══════════════════════════════════════════════════════
+function onCorrect(binEl, pos){
+  combo++;
+  const multiplier=combo>=5?3:combo>=3?2:1;
+  const pts=currentItem.pts*multiplier;
+  score+=pts;
+  scoreVal.textContent=score;
+
+  // combo display
+  comboVal.textContent=multiplier;
+  if(multiplier>1){
+    comboBox.classList.remove('show'); void comboBox.offsetWidth; comboBox.classList.add('show');
+  }
+
+  // score flash
+  scoreFlash.textContent='+'+pts+(multiplier>1?' 🔥':'');
+  scoreFlash.style.color=multiplier>1?'#FFD700':'#4CAF50';
+  scoreFlash.classList.remove('show'); void scoreFlash.offsetWidth; scoreFlash.classList.add('show');
+
+  // bin bounce
+  binEl.classList.remove('correct'); void binEl.offsetWidth; binEl.classList.add('correct');
+  setTimeout(()=>binEl.classList.remove('correct'),500);
+
+  // particles from bin
+  spawnParticles(binEl);
+
+  // hide item
+  trashWrap.style.display='none';
+  setTimeout(nextItem, 350);
+}
+
+function onWrong(binEl){
+  combo=0;
+  comboBox.classList.remove('show');
+
+  // bin shake
+  binEl.classList.remove('wrong'); void binEl.offsetWidth; binEl.classList.add('wrong');
+  setTimeout(()=>binEl.classList.remove('wrong'),400);
+
+  // red flash
+  const wf=document.getElementById('wrong-flash');
+  wf.classList.add('on');
+  setTimeout(()=>wf.classList.remove('on'),200);
+
+  // bounce item back
+  trashWrap.style.left='50%';
+  trashWrap.style.top='38%';
+  trashWrap.style.transform='translate(-50%,-50%)';
+  trashWrap.style.transition='left .35s cubic-bezier(.34,1.56,.64,1),top .35s cubic-bezier(.34,1.56,.64,1)';
+  setTimeout(()=>trashWrap.style.transition='',400);
+}
+
+function spawnParticles(binEl){
+  const r=binEl.getBoundingClientRect();
+  const cx=r.left+r.width/2, cy=r.top;
+  const cols=['#FFD700','#4CAF50','#2196F3','#F48FB1','#fff','#FF9800'];
+  for(let i=0;i<18;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    const sz=6+Math.random()*10;
+    const angle=Math.random()*Math.PI*2;
+    const dist=40+Math.random()*80;
+    const dx=Math.cos(angle)*dist, dy=Math.sin(angle)*dist-60;
+    p.style.cssText=`width:${sz}px;height:${sz}px;left:${cx-sz/2}px;top:${cy-sz/2}px;
+      background:${cols[Math.floor(Math.random()*cols.length)]};
+      --dx:translate(${dx}px,${dy}px);
+      animation-duration:${.5+Math.random()*.5}s;
+      animation-delay:${Math.random()*.1}s;`;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),800);
+  }
+}
+
+function launchConfetti(){
+  const cols=['#4CAF50','#FDD835','#1E88E5','#F48FB1','#fff','#FF9800'];
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div');
+    el.className='cpiece';
+    const sz=8+Math.random()*12;
+    el.style.cssText=`width:${sz}px;height:${sz}px;border-radius:${Math.random()>.5?'50%':'2px'};
+      left:${Math.random()*100}vw;background:${cols[Math.floor(Math.random()*cols.length)]};
+      animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*.8}s;`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),4000);
+  }
+}
+
+// PWA
+if('serviceWorker' in navigator){
+  const sw=`const C='reciclar-v1';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'})));
+}
+</script>
+</body>
+</html>
