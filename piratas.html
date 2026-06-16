@@ -12,53 +12,39 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{width:100%;height:100%;overflow:hidden;background:#0d2b4e;touch-action:none;user-select:none;}
 #c{position:fixed;inset:0;width:100%;height:100%;touch-action:none;}
-
 #hud{
   position:fixed;top:0;left:0;right:0;z-index:10;
   display:flex;align-items:center;gap:8px;
   padding:8px 12px;
   padding-top:calc(8px + env(safe-area-inset-top,0px));
-  background:rgba(0,0,0,.5);
+  background:rgba(0,0,0,.55);
   backdrop-filter:blur(6px);
   pointer-events:none;
 }
-#score-hud{
-  background:linear-gradient(135deg,#B8860B,#8B6914);
-  color:#FFD700;border-radius:50px;padding:5px 14px;
-  font:900 1.3rem/1 'Helvetica Neue',Arial;
-  box-shadow:0 3px 10px rgba(0,0,0,.4);
-  white-space:nowrap;
-}
-#hs-hud{font:700 .85rem/1 Arial;color:rgba(255,255,255,.6);white-space:nowrap;}
-
-/* danger bar — fills up when no ship sunk */
-#danger-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
-#danger-lbl{font:700 .7rem/1 Arial;color:#FF5252;letter-spacing:1px;}
-#dbar-bg{width:100%;max-width:140px;height:10px;background:rgba(255,255,255,.15);border-radius:6px;overflow:hidden;}
-#dbar{height:100%;width:0%;background:linear-gradient(90deg,#FFD700,#FF5252);border-radius:6px;transition:background .3s;}
-
-/* reload bar */
+#score-hud{background:linear-gradient(135deg,#B8860B,#7a5900);color:#FFD700;
+  border-radius:50px;padding:5px 14px;font:900 1.3rem/1 'Helvetica Neue',Arial;
+  box-shadow:0 3px 10px rgba(0,0,0,.4);white-space:nowrap;}
+#hs-hud{font:700 .85rem/1 Arial;color:rgba(255,255,255,.55);white-space:nowrap;margin-left:auto;}
+#danger-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;max-width:150px;}
+#danger-lbl{font:700 .68rem/1 Arial;color:#FF5252;letter-spacing:1px;}
+#dbar-bg{width:100%;height:10px;background:rgba(255,255,255,.15);border-radius:6px;overflow:hidden;}
+#dbar{height:100%;width:0%;border-radius:6px;}
 #reload-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;}
-#reload-lbl{font:700 .7rem/1 Arial;color:#80DEEA;letter-spacing:1px;}
-#rbar-bg{width:60px;height:10px;background:rgba(255,255,255,.15);border-radius:6px;overflow:hidden;}
+#reload-lbl{font:700 .68rem/1 Arial;color:#80DEEA;letter-spacing:1px;}
+#rbar-bg{width:52px;height:10px;background:rgba(255,255,255,.15);border-radius:6px;overflow:hidden;}
 #rbar{height:100%;width:100%;background:linear-gradient(90deg,#26C6DA,#00BCD4);border-radius:6px;}
-
-.screen{
-  position:fixed;inset:0;z-index:50;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+.screen{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;
   background:radial-gradient(ellipse at 50% 40%,rgba(13,43,78,.97),rgba(2,8,20,.99));
-  transition:opacity .3s;
-}
+  transition:opacity .3s;}
 .screen.off{opacity:0;pointer-events:none;}
 .s-emoji{font-size:5rem;line-height:1;}
-.s-title{font:900 2.2rem/1 'Helvetica Neue',Arial;color:#FFD700;text-align:center;text-shadow:0 0 20px rgba(255,215,0,.5);}
+.s-title{font:900 2.2rem/1 'Helvetica Neue',Arial;color:#FFD700;text-align:center;
+  text-shadow:0 0 20px rgba(255,215,0,.5);}
 .s-sub{font:400 .95rem/1.5 Arial;color:rgba(255,255,255,.75);text-align:center;max-width:280px;}
-.big-btn{
-  background:linear-gradient(135deg,#FFD700,#FFA000);
-  border:none;border-radius:50px;padding:14px 36px;
-  font:900 1.7rem/1 'Helvetica Neue',Arial;color:#3E1A00;cursor:pointer;
-  box-shadow:0 5px 0 #E65100;transition:transform .1s,box-shadow .1s;
-}
+.big-btn{background:linear-gradient(135deg,#FFD700,#FFA000);border:none;border-radius:50px;
+  padding:14px 36px;font:900 1.7rem/1 'Helvetica Neue',Arial;color:#3E1A00;cursor:pointer;
+  box-shadow:0 5px 0 #E65100;transition:transform .1s,box-shadow .1s;}
 .big-btn:active{transform:translateY(4px);box-shadow:0 1px 0 #E65100;}
 #lb,#lb2{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
   border-radius:14px;padding:10px 18px;width:min(300px,86vw);}
@@ -75,7 +61,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d2b4e;touch-action
 </style>
 </head>
 <body>
-
 <div id="hud">
   <div id="score-hud">🏴‍☠️ <span id="sv">0</span></div>
   <div id="danger-wrap">
@@ -88,20 +73,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d2b4e;touch-action
   </div>
   <div id="hs-hud">🏆 <span id="hsv">0</span></div>
 </div>
-
 <canvas id="c"></canvas>
 
-<!-- START -->
 <div class="screen" id="ss">
   <div class="s-emoji">🏴‍☠️</div>
   <div class="s-title">Piratas do Canhão!</div>
-  <div class="s-sub">Arrasta o dedo para apontar o canhão.<br>Larga para disparar!<br><br>
-    🚢 Afunda os barcos antes que fujam!<br>⚠️ Se não acertares durante muito tempo, perdes!</div>
+  <div class="s-sub">Arrasta o dedo para apontar.<br>Larga para disparar! 💣<br><br>
+    🚢 Grande = 1pt &nbsp;·&nbsp; ⛵ Médio = 2pts &nbsp;·&nbsp; 🛶 Pequeno = 3pts<br><br>
+    ⚠️ Não deixes passar muitos barcos!</div>
   <button class="big-btn" onclick="startGame()">⚓ Jogar</button>
   <div id="lb"></div>
 </div>
 
-<!-- GAME OVER -->
 <div class="screen off" id="gs">
   <div class="s-emoji">💀</div>
   <div class="s-title">Os barcos fugiram!</div>
@@ -112,46 +95,42 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d2b4e;touch-action
 </div>
 
 <script>
-// ─── CANVAS ────────────────────────────────────────────────
+// ─── CANVAS ────────────────────────────────────────────────────
 const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
-let W = 0, H = 0, DPR = 1;
-let PIRATE_Y; // y position of pirate/cannon base
+const ctx    = canvas.getContext('2d');
+let W = 0, H = 0, DPR = 1, CANNON_Y = 0;
 
 function resize() {
   DPR = window.devicePixelRatio || 1;
-  W = window.innerWidth;
-  H = window.innerHeight;
+  W   = window.innerWidth;
+  H   = window.innerHeight;
   canvas.width  = W * DPR;
   canvas.height = H * DPR;
   canvas.style.width  = W + 'px';
   canvas.style.height = H + 'px';
   ctx.scale(DPR, DPR);
-  PIRATE_Y = H - 80;
+  CANNON_Y = H - 90;
 }
 window.addEventListener('resize', resize);
 resize();
 
-// ─── EMOJI HELPER ──────────────────────────────────────────
-let _efont = '';
-function em(e, x, y, size, angle = 0) {
-  const f = `${size}px serif`;
-  if (f !== _efont) { ctx.font = f; _efont = f; }
-  ctx.textAlign = 'center';
+// ─── EMOJI — single font set, no per-frame font change flicker ──
+// We pre-size all emoji draws with one font per size bucket
+const FONT_CACHE = {};
+function setFont(size) {
+  const key = size + '';
+  if (!FONT_CACHE[key]) FONT_CACHE[key] = `${size}px serif`;
+  if (ctx.font !== FONT_CACHE[key]) ctx.font = FONT_CACHE[key];
+  ctx.textAlign    = 'center';
   ctx.textBaseline = 'middle';
-  if (angle) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(angle);
-    ctx.fillText(e, 0, 0);
-    ctx.restore();
-  } else {
-    ctx.fillText(e, x, y);
-  }
+}
+function em(e, x, y, size) {
+  setFont(size);
+  ctx.fillText(e, x, y);
 }
 
-// ─── LEADERBOARD ───────────────────────────────────────────
-const LB_KEY = 'piratas_v1';
+// ─── LEADERBOARD ───────────────────────────────────────────────
+const LB_KEY = 'piratas_v2';
 function getBoard() { try { return JSON.parse(localStorage.getItem(LB_KEY)) || []; } catch { return []; } }
 function saveScore(pts) {
   let b = getBoard();
@@ -171,490 +150,382 @@ function renderLB(id, hi = -1) {
       : b.map((r, i) => `<div class="lb-r ${r.pts===hi&&i===0?'hi':''}">
           <span class="lb-m">${medals[i]}</span>
           <span class="lb-d">${r.d}</span>
-          <span class="lb-p">${r.pts} pts</span>
-         </div>`).join(''));
+          <span class="lb-p">${r.pts} pts</span></div>`).join(''));
 }
 
-// ─── GAME STATE ────────────────────────────────────────────
-const DANGER_TIME = 8;   // seconds before game over if no hit
-const RELOAD_TIME = 45;  // frames between shots
+// ─── CONSTANTS ─────────────────────────────────────────────────
+const DANGER_SECS  = 10;   // seconds of no sink → game over
+const RELOAD_FRAMES= 50;   // frames between shots (~0.8s at 60fps)
+const BALL_SPEED   = 9;
+const INIT_SHIP_INTERVAL = 220; // frames between ship spawns initially
+const MIN_SHIP_INTERVAL  = 90;
+const INIT_SHIP_SPEED    = 0.8; // pixels per frame initially
+const MAX_SHIP_SPEED     = 2.2;
 
-let score, gameRunning, t;
-let cannonAngle;          // radians — 0 = straight up
-let aiming, aimX, aimY;  // drag state
+// Ship types — sizes tuned for visual clarity, not too fast
+const SHIP_TYPES = [
+  { emoji:'🚢', ew:72, eh:40, pts:1, hp:3, speedMult:0.8  },
+  { emoji:'⛵', ew:52, eh:34, pts:2, hp:2, speedMult:1.1  },
+  { emoji:'🛶', ew:38, eh:28, pts:3, hp:1, speedMult:1.4  },
+];
+
+// ─── GAME STATE ────────────────────────────────────────────────
+let score, gameRunning, frame;
+let cannonAngle;
+let aiming, aimX, aimY;
 let canFire, reloadCD;
-let dangerTimer;          // counts down to game over
-let ships, balls, particles, splashes, smokes;
-let shipSpawnCD, shipSpawnInterval, shipSpeed;
+let dangerCD;
+let ships, balls, particles, smokes;
+let spawnInterval, spawnCD, baseSpeed;
 
-// ─── INPUT ─────────────────────────────────────────────────
-function getXY(e) {
+// ─── INPUT ─────────────────────────────────────────────────────
+function clientToGame(e) {
   const src = e.touches ? e.touches[0] : e;
   return { x: src.clientX, y: src.clientY };
 }
-
-canvas.addEventListener('touchstart',  e => { e.preventDefault(); const p=getXY(e); aiming=true; aimX=p.x; aimY=p.y; updateAim(p.x,p.y); }, {passive:false});
-canvas.addEventListener('touchmove',   e => { e.preventDefault(); const p=getXY(e); aimX=p.x; aimY=p.y; updateAim(p.x,p.y); }, {passive:false});
-canvas.addEventListener('touchend',    e => { e.preventDefault(); if(aiming && gameRunning){ fire(); } aiming=false; }, {passive:false});
-canvas.addEventListener('touchcancel', e => { aiming=false; }, {passive:false});
-canvas.addEventListener('mousedown',   e => { const p=getXY(e); aiming=true; aimX=p.x; aimY=p.y; updateAim(p.x,p.y); });
-canvas.addEventListener('mousemove',   e => { if(!aiming) return; aimX=e.clientX; aimY=e.clientY; updateAim(e.clientX,e.clientY); });
-canvas.addEventListener('mouseup',     e => { if(aiming && gameRunning){ fire(); } aiming=false; });
-
-function updateAim(x, y) {
+function setAim(x, y) {
   if (!gameRunning) return;
-  // angle from cannon base to finger
   const dx = x - W / 2;
-  const dy = y - PIRATE_Y;
-  cannonAngle = Math.atan2(dy, dx);
-  // clamp: only allow firing upward (left side -π to 0, right side 0 to π, but only upper half)
-  // allow full left-right range but clamp so never fires downward
-  if (cannonAngle > -0.1 && cannonAngle < Math.PI + 0.1) {
-    // pointing down — clamp to nearest side
-    cannonAngle = cannonAngle < Math.PI / 2 ? -0.1 : Math.PI + 0.1;
+  const dy = y - CANNON_Y;
+  let a = Math.atan2(dy, dx);
+  // clamp to upper half only (don't let cannon point down)
+  if (a > -0.05 && a < Math.PI + 0.05) {
+    a = (Math.abs(a - Math.PI/2) < Math.PI/2) ? Math.PI + 0.05 : -0.05;
   }
+  cannonAngle = a;
 }
+canvas.addEventListener('touchstart',  e => { e.preventDefault(); const p=clientToGame(e); aiming=true; aimX=p.x; aimY=p.y; setAim(p.x,p.y); }, {passive:false});
+canvas.addEventListener('touchmove',   e => { e.preventDefault(); const p=clientToGame(e); aimX=p.x; aimY=p.y; setAim(p.x,p.y); }, {passive:false});
+canvas.addEventListener('touchend',    e => { e.preventDefault(); if(aiming&&gameRunning) fire(); aiming=false; }, {passive:false});
+canvas.addEventListener('touchcancel', e => { aiming=false; }, {passive:false});
+canvas.addEventListener('mousedown',   e => { const p=clientToGame(e); aiming=true; setAim(p.x,p.y); });
+canvas.addEventListener('mousemove',   e => { if(!aiming) return; setAim(e.clientX,e.clientY); });
+canvas.addEventListener('mouseup',     e => { if(aiming&&gameRunning) fire(); aiming=false; });
 
 function fire() {
-  if (!canFire || !gameRunning) return;
-  canFire = false;
-  reloadCD = RELOAD_TIME;
-
-  const SPEED = 11;
-  const cx = W / 2, cy = PIRATE_Y - 10;
-  balls.push({
-    x: cx + Math.cos(cannonAngle) * 35,
-    y: cy + Math.sin(cannonAngle) * 35,
-    vx: Math.cos(cannonAngle) * SPEED,
-    vy: Math.sin(cannonAngle) * SPEED,
-    r: 11,
-    trail: []
-  });
-
-  // smoke puff at muzzle
-  const mx = cx + Math.cos(cannonAngle) * 50;
-  const my = cy + Math.sin(cannonAngle) * 50;
-  for (let i = 0; i < 5; i++) {
-    smokes.push({
-      x: mx, y: my,
-      vx: Math.cos(cannonAngle) * (0.5 + Math.random()) + (Math.random() - .5),
-      vy: Math.sin(cannonAngle) * (0.5 + Math.random()) + (Math.random() - .5),
-      life: 22 + Math.random() * 12 | 0,
-      maxLife: 34,
-      r: 8 + Math.random() * 10 | 0
-    });
+  if (!canFire) return;
+  canFire  = false;
+  reloadCD = RELOAD_FRAMES;
+  const ox = W/2 + Math.cos(cannonAngle)*55;
+  const oy = CANNON_Y + Math.sin(cannonAngle)*55;
+  balls.push({ x:ox, y:oy, vx:Math.cos(cannonAngle)*BALL_SPEED, vy:Math.sin(cannonAngle)*BALL_SPEED, trail:[] });
+  // smoke
+  for (let i=0;i<6;i++) {
+    const spread = (Math.random()-.5)*.8;
+    smokes.push({ x:ox, y:oy,
+      vx: Math.cos(cannonAngle)*(0.8+Math.random()*.5)+spread,
+      vy: Math.sin(cannonAngle)*(0.8+Math.random()*.5)+spread,
+      life:28+Math.random()*12|0, maxLife:40, r:7+Math.random()*8|0 });
   }
 }
 
-// ─── SHIP FACTORY ──────────────────────────────────────────
-const SHIP_TYPES = [
-  { size: 'L', emoji: '🚢', w: 80, h: 44, pts: 1, hp: 3, speed: 0.9 },
-  { size: 'M', emoji: '⛵', w: 54, h: 36, pts: 2, hp: 2, speed: 1.3 },
-  { size: 'S', emoji: '🛶', w: 38, h: 28, pts: 3, hp: 1, speed: 1.7 },
-];
-
+// ─── SPAWN ─────────────────────────────────────────────────────
 function spawnShip() {
-  const type = SHIP_TYPES[Math.random() * SHIP_TYPES.length | 0];
+  const t = SHIP_TYPES[Math.floor(Math.random()*SHIP_TYPES.length)];
   const fromRight = Math.random() < 0.5;
-  const row = Math.floor(Math.random() * 3); // 3 lanes
-  const y = 80 + row * 70 + Math.random() * 20;
-  const spd = (type.speed + (score / 30) * 0.4) * (fromRight ? -1 : 1);
-  return {
-    ...type,
-    x: fromRight ? W + type.w : -type.w,
-    y,
-    vx: spd,
-    hp: type.hp,
-    maxHp: type.hp,
-    sinking: false,
-    sinkTimer: 0,
-    hitFlash: 0,
-  };
+  // 3 lanes in upper portion of screen
+  const lane = Math.floor(Math.random()*3);
+  const y = 95 + lane * 68 + Math.random()*18;
+  const spd = baseSpeed * t.speedMult * (fromRight ? -1 : 1);
+  return { ...t, x: fromRight ? W+80 : -80, y, vx:spd,
+    hp:t.hp, maxHp:t.hp, sinking:false, sinkT:0, hitFlash:0 };
 }
 
-// ─── PARTICLES ─────────────────────────────────────────────
-function burst(x, y, emojis, n = 8, spread = 4) {
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2 + Math.random();
-    const spd = 1.5 + Math.random() * spread;
-    particles.push({
-      x, y,
-      vx: Math.cos(a) * spd,
-      vy: Math.sin(a) * spd - 2,
-      e: emojis[Math.random() * emojis.length | 0],
-      life: 30 + Math.random() * 20 | 0,
-      maxLife: 50,
-      size: 16 + Math.random() * 12 | 0
-    });
+// ─── PARTICLES ─────────────────────────────────────────────────
+function burst(x, y, emojis, n=8) {
+  for (let i=0;i<n;i++) {
+    const a = Math.random()*Math.PI*2;
+    const spd = 1.5+Math.random()*3.5;
+    particles.push({ x, y,
+      vx:Math.cos(a)*spd, vy:Math.sin(a)*spd-1.5,
+      e: emojis[Math.floor(Math.random()*emojis.length)],
+      life:32+Math.random()*18|0, maxLife:50, size:16+Math.random()*10|0 });
   }
 }
 
-// ─── WATER ─────────────────────────────────────────────────
-// precomputed wave points
-let waveOff = 0;
-function drawWater() {
-  waveOff += 0.015;
-  // sky gradient
-  const sky = ctx.createLinearGradient(0, 0, 0, H * 0.55);
-  sky.addColorStop(0, '#0a1628');
-  sky.addColorStop(1, '#0d3b6e');
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, W, H);
-
-  // sun / moon glow top right
-  ctx.save();
-  ctx.shadowColor = '#FFE082'; ctx.shadowBlur = 40;
-  em('🌕', W - 55, 55, 46);
-  ctx.restore();
-
-  // distant island / coast hint
-  em('🏝️', W * 0.12, H * 0.28, 32);
-  em('⛅', W * 0.6, H * 0.12, 28);
-  em('⛅', W * 0.3, H * 0.08, 22);
-
-  // water body
-  const waterTop = H * 0.30;
-  const water = ctx.createLinearGradient(0, waterTop, 0, H);
-  water.addColorStop(0, '#0d4f8a');
-  water.addColorStop(0.4, '#0a3d6e');
-  water.addColorStop(1, '#051d38');
-  ctx.fillStyle = water;
-  ctx.fillRect(0, waterTop, W, H - waterTop);
-
-  // wave lines
-  for (let row = 0; row < 6; row++) {
-    const wy = waterTop + row * 38 + Math.sin(waveOff + row) * 4;
-    ctx.strokeStyle = `rgba(100,180,255,${0.08 + row * 0.01})`;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let x = 0; x <= W; x += 18) {
-      const y = wy + Math.sin(x * 0.04 + waveOff + row * 0.7) * 5;
-      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-  }
-
-  // foam/sparkle on water
-  if (t % 8 === 0) {
-    ctx.fillStyle = 'rgba(255,255,255,.15)';
-    for (let i = 0; i < 4; i++) {
-      const fx = Math.random() * W;
-      const fy = waterTop + Math.random() * (H - waterTop - 60);
-      ctx.beginPath(); ctx.ellipse(fx, fy, 12, 3, 0, 0, Math.PI * 2); ctx.fill();
-    }
-  }
-}
-
-// ─── PIRATE + CANNON ───────────────────────────────────────
-function drawPirate() {
-  const cx = W / 2, cy = PIRATE_Y;
-
-  // platform / rock
-  ctx.fillStyle = '#3E2723';
-  ctx.beginPath();
-  ctx.ellipse(cx, cy + 30, 80, 22, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#4E342E';
-  ctx.beginPath();
-  ctx.ellipse(cx, cy + 26, 74, 18, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // cannon barrel — rotates with cannonAngle
-  const blen = 50, bw = 14;
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate(cannonAngle);
-  // barrel body
-  const bgrad = ctx.createLinearGradient(0, -bw/2, 0, bw/2);
-  bgrad.addColorStop(0, '#616161');
-  bgrad.addColorStop(0.5, '#9E9E9E');
-  bgrad.addColorStop(1, '#424242');
-  ctx.fillStyle = bgrad;
-  ctx.beginPath();
-  ctx.roundRect(8, -bw/2, blen, bw, 4);
-  ctx.fill();
-  // muzzle ring
-  ctx.fillStyle = '#757575';
-  ctx.beginPath();
-  ctx.ellipse(8 + blen, 0, 6, bw/2 + 2, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // cannon ball inside
-  ctx.fillStyle = '#212121';
-  ctx.beginPath();
-  ctx.arc(8 + blen - 6, 0, 5, 0, Math.PI * 2);
-  ctx.fill();
-  // aim line (when dragging)
-  if (aiming && gameRunning) {
-    ctx.save();
-    ctx.setLineDash([6, 10]);
-    ctx.strokeStyle = 'rgba(255,220,50,.55)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(8 + blen, 0);
-    ctx.lineTo(8 + blen + 180, 0);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.restore();
-  }
-  ctx.restore();
-
-  // cannon wheel
-  ctx.fillStyle = '#5D4037';
-  ctx.beginPath();
-  ctx.ellipse(cx, cy + 10, 22, 22, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = '#3E2723'; ctx.lineWidth = 3;
-  for (let i = 0; i < 6; i++) {
-    const a = i / 6 * Math.PI * 2;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy + 10);
-    ctx.lineTo(cx + Math.cos(a) * 20, cy + 10 + Math.sin(a) * 20);
-    ctx.stroke();
-  }
-  ctx.beginPath(); ctx.arc(cx, cy + 10, 6, 0, Math.PI * 2);
-  ctx.fillStyle = '#8D6E63'; ctx.fill();
-
-  // pirate emoji on platform
-  em('🏴‍☠️', cx - 45, cy - 16, 38);
-  // cannon emoji label
-  em('💣', cx + 44, cy - 18, 20);
-}
-
-// ─── START / LOOP ──────────────────────────────────────────
+// ─── START ─────────────────────────────────────────────────────
 function startGame() {
   document.getElementById('ss').classList.add('off');
   document.getElementById('gs').classList.add('off');
-  score = 0; t = 0; gameRunning = true;
-  cannonAngle = -Math.PI / 2; // straight up
-  aiming = false; canFire = true; reloadCD = 0;
-  dangerTimer = DANGER_TIME * 60;
-  ships = []; balls = []; particles = []; splashes = []; smokes = [];
-  shipSpawnCD = 80; shipSpawnInterval = 160; shipSpeed = 1.0;
-  updateScoreHUD();
-  document.getElementById('dbar').style.width = '0%';
+  score=0; gameRunning=true; frame=0;
+  cannonAngle = -Math.PI/2;
+  aiming=false; canFire=true; reloadCD=0;
+  dangerCD = DANGER_SECS * 60;
+  ships=[]; balls=[]; particles=[]; smokes=[];
+  spawnInterval = INIT_SHIP_INTERVAL;
+  spawnCD = 80; // first ship appears quickly
+  baseSpeed = INIT_SHIP_SPEED;
+  document.getElementById('sv').textContent = '0';
   document.getElementById('rbar').style.width = '100%';
+  document.getElementById('dbar').style.width = '0%';
   const board = getBoard();
   document.getElementById('hsv').textContent = board.length ? board[0].pts : 0;
 }
 
-function updateScoreHUD() {
-  document.getElementById('sv').textContent = score;
+// ─── DRAW WATER + SKY ──────────────────────────────────────────
+let waveT = 0;
+function drawWorld() {
+  waveT += 0.012;
+  // sky
+  const sky = ctx.createLinearGradient(0,0,0,H*0.52);
+  sky.addColorStop(0,'#06111f'); sky.addColorStop(1,'#0d3b6e');
+  ctx.fillStyle = sky; ctx.fillRect(0,0,W,H);
+  // moon
+  ctx.save(); ctx.shadowColor='#fffde7'; ctx.shadowBlur=30;
+  em('🌕', W-56, 54, 44);
+  ctx.restore();
+  // clouds
+  em('⛅', W*0.62, H*0.1, 30);
+  em('⛅', W*0.28, H*0.07, 24);
+  em('🏝️', W*0.1,  H*0.3, 30);
+
+  // water
+  const waterY = H*0.30;
+  const wg = ctx.createLinearGradient(0,waterY,0,H);
+  wg.addColorStop(0,'#0d5a9e'); wg.addColorStop(0.5,'#0a3d6e'); wg.addColorStop(1,'#041428');
+  ctx.fillStyle = wg; ctx.fillRect(0,waterY,W,H-waterY);
+
+  // waves — drawn once, no per-pixel globalAlpha changes
+  for (let row=0;row<5;row++) {
+    const wy = waterY + row*42 + Math.sin(waveT+row)*5;
+    ctx.strokeStyle = `rgba(120,200,255,${0.07+row*0.01})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let x=0;x<=W;x+=20) {
+      const py = wy + Math.sin(x*0.035+waveT+row*0.8)*6;
+      x===0 ? ctx.moveTo(x,py) : ctx.lineTo(x,py);
+    }
+    ctx.stroke();
+  }
 }
 
-let frameId;
+// ─── DRAW CANNON + PIRATE ──────────────────────────────────────
+function drawCannon() {
+  const cx = W/2, cy = CANNON_Y;
+
+  // rock/platform
+  ctx.fillStyle='#3E2723';
+  ctx.beginPath(); ctx.ellipse(cx,cy+32,78,20,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#4E342E';
+  ctx.beginPath(); ctx.ellipse(cx,cy+28,70,16,0,0,Math.PI*2); ctx.fill();
+
+  // cannon barrel (rotates)
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(cannonAngle);
+  // barrel
+  const bg = ctx.createLinearGradient(0,-7,0,7);
+  bg.addColorStop(0,'#9E9E9E'); bg.addColorStop(0.5,'#757575'); bg.addColorStop(1,'#424242');
+  ctx.fillStyle = bg;
+  ctx.beginPath(); ctx.roundRect(6,-7,54,14,4); ctx.fill();
+  // muzzle
+  ctx.fillStyle='#616161';
+  ctx.beginPath(); ctx.ellipse(60,0,8,8,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#212121';
+  ctx.beginPath(); ctx.arc(60,0,5,0,Math.PI*2); ctx.fill();
+  // aim line (only while dragging)
+  if (aiming) {
+    ctx.save();
+    ctx.setLineDash([5,10]); ctx.strokeStyle='rgba(255,220,50,.5)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(68,0); ctx.lineTo(240,0); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+
+  // wheel
+  ctx.fillStyle='#5D4037';
+  ctx.beginPath(); ctx.arc(cx,cy+12,20,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#3E2723'; ctx.lineWidth=2.5;
+  for (let i=0;i<6;i++) {
+    const a=i/6*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(cx,cy+12); ctx.lineTo(cx+Math.cos(a)*18,cy+12+Math.sin(a)*18); ctx.stroke();
+  }
+  ctx.fillStyle='#8D6E63'; ctx.beginPath(); ctx.arc(cx,cy+12,5,0,Math.PI*2); ctx.fill();
+
+  // pirate
+  em('🏴‍☠️', cx-48, cy-14, 40);
+}
+
+// ─── MAIN LOOP ─────────────────────────────────────────────────
 function loop() {
-  frameId = requestAnimationFrame(loop);
+  requestAnimationFrame(loop);
   if (!gameRunning) return;
-  t++;
+  frame++;
 
-  // ── DRAW WORLD ──
-  drawWater();
+  drawWorld();
 
-  // ── SPAWN SHIPS ──
-  shipSpawnCD--;
-  if (shipSpawnCD <= 0) {
+  // ── Spawn ships ──
+  spawnCD--;
+  if (spawnCD <= 0) {
     ships.push(spawnShip());
-    shipSpawnInterval = Math.max(55, shipSpawnInterval * 0.97);
-    shipSpawnCD = shipSpawnInterval | 0;
+    spawnInterval = Math.max(MIN_SHIP_INTERVAL, spawnInterval - 1.5);
+    spawnCD = spawnInterval | 0;
+    baseSpeed = Math.min(MAX_SHIP_SPEED, baseSpeed + 0.04);
   }
 
-  // ── RELOAD ──
+  // ── Reload ──
   if (!canFire) {
     reloadCD--;
-    document.getElementById('rbar').style.width = ((1 - reloadCD / RELOAD_TIME) * 100) + '%';
-    if (reloadCD <= 0) { canFire = true; document.getElementById('rbar').style.width = '100%'; }
+    document.getElementById('rbar').style.width = ((1-reloadCD/RELOAD_FRAMES)*100)+'%';
+    if (reloadCD <= 0) { canFire=true; document.getElementById('rbar').style.width='100%'; }
   }
 
-  // ── DANGER TIMER ──
-  dangerTimer--;
-  const dangerPct = 1 - dangerTimer / (DANGER_TIME * 60);
-  document.getElementById('dbar').style.width = (dangerPct * 100) + '%';
-  document.getElementById('dbar').style.background =
-    dangerPct < 0.5 ? 'linear-gradient(90deg,#FFD700,#FFA000)'
-    : dangerPct < 0.8 ? 'linear-gradient(90deg,#FFA000,#FF5252)'
-    : 'linear-gradient(90deg,#FF5252,#D50000)';
-  if (dangerTimer <= 0) { endGame(); return; }
+  // ── Danger timer ──
+  dangerCD--;
+  const dpct = Math.max(0, 1 - dangerCD/(DANGER_SECS*60));
+  const dbar = document.getElementById('dbar');
+  dbar.style.width = (dpct*100)+'%';
+  dbar.style.background = dpct < 0.5
+    ? 'linear-gradient(90deg,#FFD700,#FFA000)'
+    : dpct < 0.8
+    ? 'linear-gradient(90deg,#FFA000,#FF5252)'
+    : 'linear-gradient(90deg,#FF5252,#b71c1c)';
+  if (dangerCD <= 0) { endGame(); return; }
 
-  // ── UPDATE & DRAW SHIPS ──
+  // ── Ships ──
   ships = ships.filter(s => {
-    // move
-    if (!s.sinking) {
-      s.x += s.vx;
-      if (s.hitFlash > 0) s.hitFlash--;
-    } else {
-      s.sinkTimer++;
-      s.y += 1.5;
-      s.x += s.vx * 0.3;
-    }
+    if (!s.sinking) s.x += s.vx;
+    else { s.sinkT++; s.y += 1.2; }
+    if (s.x > W+120 || s.x < -120) return false;
+    if (s.sinkT > 55) return false;
 
-    // off screen
-    if (s.x > W + 120 || s.x < -120) return false;
-    if (s.sinkTimer > 50) return false;
-
-    // draw ship
     ctx.save();
-    if (s.hitFlash > 0 && Math.floor(t / 3) % 2 === 0) {
-      ctx.globalAlpha = 0.4;
-    }
     if (s.sinking) {
-      ctx.globalAlpha = Math.max(0, 1 - s.sinkTimer / 50);
+      ctx.globalAlpha = Math.max(0, 1 - s.sinkT/55);
       ctx.translate(s.x, s.y);
-      ctx.rotate(s.vx > 0 ? s.sinkTimer * 0.04 : -s.sinkTimer * 0.04);
-      em(s.emoji, 0, 0, s.w);
+      ctx.rotate(s.vx > 0 ? s.sinkT*0.035 : -s.sinkT*0.035);
+      em(s.emoji, 0, 0, s.ew);
     } else {
-      em(s.emoji, s.x, s.y, s.w);
-      // HP dots
-      for (let i = 0; i < s.maxHp; i++) {
-        ctx.fillStyle = i < s.hp ? '#FF5252' : 'rgba(255,255,255,.2)';
-        ctx.beginPath();
-        ctx.arc(s.x - (s.maxHp - 1) * 6 + i * 12, s.y + s.h / 2 + 10, 5, 0, Math.PI * 2);
-        ctx.fill();
+      // hit flash: briefly tint red using a red rect underneath
+      if (s.hitFlash > 0) {
+        s.hitFlash--;
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = '#FF5252';
+        ctx.beginPath(); ctx.ellipse(s.x, s.y, s.ew*0.5, s.eh*0.5, 0, 0, Math.PI*2); ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+      em(s.emoji, s.x, s.y, s.ew);
+      // HP pips
+      for (let i=0;i<s.maxHp;i++) {
+        ctx.fillStyle = i < s.hp ? '#FF5252' : 'rgba(255,255,255,.18)';
+        ctx.beginPath(); ctx.arc(s.x-(s.maxHp-1)*7+i*14, s.y+s.eh*0.5+10, 5, 0, Math.PI*2); ctx.fill();
       }
     }
     ctx.restore();
     return true;
   });
 
-  // ── UPDATE & DRAW BALLS ──
+  // ── Cannonballs ──
   balls = balls.filter(b => {
-    b.trail.push({ x: b.x, y: b.y });
-    if (b.trail.length > 8) b.trail.shift();
+    b.trail.push({x:b.x, y:b.y});
+    if (b.trail.length > 7) b.trail.shift();
     b.x += b.vx; b.y += b.vy;
+    if (b.x<-20||b.x>W+20||b.y<-30||b.y>H+20) return false;
 
-    // off screen
-    if (b.x < -20 || b.x > W + 20 || b.y < -20 || b.y > H + 20) return false;
-
-    // draw trail
-    b.trail.forEach((tp, ti) => {
-      ctx.globalAlpha = (ti / b.trail.length) * 0.4;
-      ctx.fillStyle = '#FF8F00';
-      ctx.beginPath();
-      ctx.arc(tp.x, tp.y, b.r * (ti / b.trail.length) * 0.7, 0, Math.PI * 2);
-      ctx.fill();
-    });
-    ctx.globalAlpha = 1;
-
-    // ball
+    // trail (no globalAlpha per point — use single fade)
     ctx.save();
-    ctx.shadowColor = '#FF8F00'; ctx.shadowBlur = 8;
-    ctx.fillStyle = '#212121';
-    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#424242';
-    ctx.beginPath(); ctx.arc(b.x - 3, b.y - 3, b.r * 0.4, 0, Math.PI * 2); ctx.fill();
+    b.trail.forEach((tp, ti) => {
+      const a = (ti+1)/b.trail.length;
+      ctx.globalAlpha = a * 0.35;
+      ctx.fillStyle = '#FF8F00';
+      ctx.beginPath(); ctx.arc(tp.x, tp.y, b.r*(a*0.6), 0, Math.PI*2); ctx.fill();
+    });
     ctx.restore();
 
-    // collision with ships
+    // ball (solid, no alpha)
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#555';
+    ctx.beginPath(); ctx.arc(b.x-2.5, b.y-2.5, b.r*0.38, 0, Math.PI*2); ctx.fill();
+
+    // hit test
     let hit = false;
     ships.forEach(s => {
       if (s.sinking) return;
-      if (Math.abs(b.x - s.x) < s.w * 0.55 && Math.abs(b.y - s.y) < s.h * 0.55) {
-        s.hp--;
-        s.hitFlash = 18;
-        burst(b.x, b.y, ['💥','🔥','💢'], 6, 3);
+      if (Math.abs(b.x-s.x) < s.ew*0.5 && Math.abs(b.y-s.y) < s.eh*0.6) {
+        s.hp--; s.hitFlash=14;
+        burst(b.x, b.y, ['💥','🔥','💢'], 5);
         hit = true;
         if (s.hp <= 0) {
           s.sinking = true;
           score += s.pts;
-          updateScoreHUD();
-          dangerTimer = DANGER_TIME * 60; // reset danger on hit!
-          burst(s.x, s.y, ['💥','🌊','💦','⭐'], 12, 5);
-          // splash
-          splashes.push({ x: s.x, y: s.y, life: 30, maxLife: 30 });
-          // score popup via particle
-          particles.push({
-            x: s.x, y: s.y - 30, vx: 0, vy: -1.2,
-            e: `+${s.pts}`, life: 45, maxLife: 45, size: 24, isText: true, color: '#FFD700'
-          });
+          document.getElementById('sv').textContent = score;
+          dangerCD = DANGER_SECS * 60;
+          burst(s.x, s.y, ['💥','🌊','💦'], 10);
+          // floating score text
+          particles.push({ x:s.x, y:s.y-20, vx:0, vy:-1,
+            e:`+${s.pts}`, life:50, maxLife:50, size:26, isText:true });
         }
       }
     });
     return !hit;
   });
 
-  // ── SMOKE ──
+  // ── Smoke ──
   smokes = smokes.filter(s => {
-    s.x += s.vx; s.y += s.vy; s.life--;
-    ctx.globalAlpha = (s.life / s.maxLife) * 0.45;
-    ctx.fillStyle = '#9E9E9E';
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, s.r * (1 - s.life / s.maxLife * 0.3), 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
+    s.x+=s.vx; s.y+=s.vy; s.life--;
+    ctx.save();
+    ctx.globalAlpha = (s.life/s.maxLife)*0.4;
+    ctx.fillStyle='#9E9E9E';
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r*(1.2-s.life/s.maxLife*0.4),0,Math.PI*2); ctx.fill();
+    ctx.restore();
     return s.life > 0;
   });
 
-  // ── SPLASHES ──
-  splashes = splashes.filter(s => {
-    s.life--;
-    const prog = 1 - s.life / s.maxLife;
-    ctx.globalAlpha = s.life / s.maxLife;
-    for (let i = 0; i < 6; i++) {
-      const a = (i / 6) * Math.PI * 2;
-      const d = prog * 40;
-      em('💧', s.x + Math.cos(a) * d, s.y + Math.sin(a) * d, 14);
-    }
-    ctx.globalAlpha = 1;
-    return s.life > 0;
-  });
-
-  // ── PARTICLES ──
+  // ── Particles ──
   particles = particles.filter(p => {
-    p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.life--;
-    ctx.globalAlpha = p.life / p.maxLife;
+    p.x+=p.vx; p.y+=p.vy; p.vy+=0.08; p.life--;
+    ctx.save();
+    ctx.globalAlpha = p.life/p.maxLife;
     if (p.isText) {
-      const f = `900 ${p.size}px 'Helvetica Neue',Arial`;
-      if (f !== _efont) { ctx.font = f; _efont = f; }
-      ctx.fillStyle = p.color;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.font = `900 ${p.size}px 'Helvetica Neue',Arial`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillStyle='#FFD700';
       ctx.fillText(p.e, p.x, p.y);
     } else {
       em(p.e, p.x, p.y, p.size);
     }
-    ctx.globalAlpha = 1;
+    ctx.restore();
     return p.life > 0;
   });
 
-  // ── PIRATE & CANNON (drawn on top) ──
-  drawPirate();
+  // ── Cannon on top ──
+  drawCannon();
 
-  // ── AIM HINT when idle ──
-  if (!aiming && gameRunning && t % 80 < 40) {
-    const f = '700 0.75rem Arial';
-    if (f !== _efont) { ctx.font = f; _efont = f; }
-    ctx.fillStyle = 'rgba(255,255,255,.45)';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('👆 Arrasta para apontar', W / 2, PIRATE_Y - 70);
+  // ── Aim hint ──
+  if (!aiming && gameRunning && Math.floor(frame/50)%2===0) {
+    ctx.save();
+    ctx.globalAlpha=0.45; ctx.fillStyle='#fff';
+    ctx.font='700 0.78rem Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('👆 Arrasta para apontar · Larga para disparar', W/2, CANNON_Y-72);
+    ctx.restore();
   }
 }
 
-// ─── END ───────────────────────────────────────────────────
+// ─── END GAME ──────────────────────────────────────────────────
 function endGame() {
-  gameRunning = false;
-  aiming = false;
-  const board = saveScore(score);
-  document.getElementById('go-score').textContent = score + ' pontos';
-  const best = board[0]?.pts || 0;
-  document.getElementById('go-msg').textContent =
-    score >= best && board.length > 0
-      ? '🏆 Novo recorde! Lendário!'
-      : score >= 25 ? '⚓ Excelente capitão!'
-      : score >= 10 ? '🏴‍☠️ Bom trabalho! Continua!'
-      : '💀 Os barcos escaparam todos!';
-  renderLB('lb2', score);
-  document.getElementById('hsv').textContent = best;
+  gameRunning=false; aiming=false;
+  const board=saveScore(score);
+  document.getElementById('go-score').textContent=score+' pontos';
+  const best=board[0]?.pts||0;
+  document.getElementById('go-msg').textContent=
+    score>=best&&board.length>0?'🏆 Novo recorde! Lendário!':
+    score>=25?'⚓ Excelente capitão!':
+    score>=10?'🏴‍☠️ Bom trabalho! Continua!':
+    '💀 Os barcos escaparam todos!';
+  renderLB('lb2',score);
+  document.getElementById('hsv').textContent=best;
   document.getElementById('gs').classList.remove('off');
 }
 
-// ─── INIT ──────────────────────────────────────────────────
+// ─── INIT ──────────────────────────────────────────────────────
 renderLB('lb');
-frameId = requestAnimationFrame(loop);
-gameRunning = false;
+requestAnimationFrame(loop);
+gameRunning=false;
 
-if ('serviceWorker' in navigator) {
-  const sw = `const C='piratas-v1';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});`;
-  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw], { type: 'text/javascript' })));
+if('serviceWorker' in navigator){
+  const sw=`const C='piratas-v2';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'})));
 }
 </script>
 </body>
