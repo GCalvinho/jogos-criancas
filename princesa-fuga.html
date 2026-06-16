@@ -10,888 +10,503 @@
 <title>👸 Fuga da Princesa</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{width:100%;height:100%;overflow:hidden;background:#0a0020;touch-action:none;}
-#c{display:block;width:100%;height:100%;touch-action:none;}
-/* UI overlays */
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0020;touch-action:none;user-select:none;}
+#c{position:fixed;inset:0;width:100%;height:100%;touch-action:none;}
+
 #hud{
   position:fixed;top:0;left:0;right:0;z-index:10;
-  display:flex;align-items:center;gap:10px;
-  padding:8px 14px;
+  display:flex;align-items:center;gap:8px;
+  padding:8px 12px;
   padding-top:calc(8px + env(safe-area-inset-top,0px));
-  background:rgba(0,0,0,.45);
-  backdrop-filter:blur(8px);
+  background:rgba(0,0,0,.5);
+  backdrop-filter:blur(6px);
   pointer-events:none;
 }
 #score-hud{
   background:linear-gradient(135deg,#9C27B0,#6A1B9A);
-  color:#fff;border-radius:50px;padding:6px 16px;
-  font:900 1.3rem/1 'Helvetica Neue',Arial,sans-serif;
-  box-shadow:0 3px 12px rgba(156,39,176,.5);
+  color:#fff;border-radius:50px;padding:5px 14px;
+  font:900 1.3rem/1 'Helvetica Neue',Arial;
+  white-space:nowrap;
 }
-#lives-hud{font-size:1.5rem;letter-spacing:2px;}
-#power-bar-wrap{
-  flex:1;display:flex;flex-direction:column;align-items:flex-end;gap:2px;
-  display:none;
-}
-#power-bar-wrap.show{display:flex;}
-#power-label{font:700 .75rem/1 Arial;color:#FFD700;}
-#power-bar-bg{width:100%;max-width:120px;height:10px;background:rgba(255,255,255,.2);border-radius:8px;overflow:hidden;}
-#power-bar{height:100%;width:100%;background:linear-gradient(90deg,#FFD700,#FF9800);border-radius:8px;transition:width .1s linear;}
-#high-score-hud{font:700 .85rem/1 Arial;color:rgba(255,255,255,.6);margin-left:auto;}
+#lives-hud{font-size:1.4rem;letter-spacing:1px;white-space:nowrap;}
+#hs-hud{font:700 .85rem/1 Arial;color:rgba(255,255,255,.6);margin-left:auto;white-space:nowrap;}
+#power-wrap{flex:1;display:none;flex-direction:column;align-items:center;gap:2px;}
+#power-wrap.show{display:flex;}
+#power-lbl{font:700 .7rem/1 Arial;color:#FFD700;letter-spacing:1px;}
+#pbar-bg{width:90px;height:8px;background:rgba(255,255,255,.2);border-radius:6px;overflow:hidden;}
+#pbar{height:100%;width:100%;background:linear-gradient(90deg,#FFD700,#FF9800);border-radius:6px;}
 
-/* screens */
 .screen{
   position:fixed;inset:0;z-index:50;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:16px;
-  background:radial-gradient(ellipse at center,rgba(74,0,114,.97) 0%,rgba(10,0,32,.99) 100%);
-  transition:opacity .4s;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  background:radial-gradient(ellipse at 50% 40%,rgba(74,0,114,.97),rgba(5,0,20,.99));
+  transition:opacity .3s;
 }
 .screen.off{opacity:0;pointer-events:none;}
-.s-title{font:900 2.4rem/1 'Helvetica Neue',Arial;color:#FFD700;text-shadow:0 0 20px rgba(255,215,0,.6);text-align:center;}
-.s-sub{font:400 1rem/1.4 Arial;color:rgba(255,255,255,.75);text-align:center;max-width:290px;}
+.s-emoji{font-size:5rem;line-height:1;}
+.s-title{font:900 2.2rem/1 'Helvetica Neue',Arial;color:#FFD700;text-shadow:0 0 20px rgba(255,215,0,.5);text-align:center;}
+.s-sub{font:400 .95rem/1.5 Arial;color:rgba(255,255,255,.75);text-align:center;max-width:280px;}
 .big-btn{
   background:linear-gradient(135deg,#FFD700,#FFA000);
-  border:none;border-radius:50px;padding:15px 40px;
-  font:900 1.8rem/1 'Helvetica Neue',Arial;color:#3E1A00;cursor:pointer;
-  box-shadow:0 6px 0 #E65100,0 8px 20px rgba(0,0,0,.4);
-  transition:transform .1s,box-shadow .1s;
+  border:none;border-radius:50px;padding:14px 36px;
+  font:900 1.7rem/1 'Helvetica Neue',Arial;color:#3E1A00;cursor:pointer;
+  box-shadow:0 5px 0 #E65100;transition:transform .1s,box-shadow .1s;
 }
-.big-btn:active{transform:translateY(4px);box-shadow:0 2px 0 #E65100;}
+.big-btn:active{transform:translateY(4px);box-shadow:0 1px 0 #E65100;}
 
-/* leaderboard */
-#lb-wrap{
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.15);
-  border-radius:16px;padding:12px 20px;width:min(320px,88vw);
-}
-.lb-title{font:700 .9rem/1 Arial;color:#FFD700;margin-bottom:10px;text-align:center;letter-spacing:2px;}
-.lb-row{
-  display:flex;align-items:center;gap:10px;
-  padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08);
-  font:600 1rem/1 Arial;color:#fff;
-}
-.lb-row:last-child{border-bottom:none;}
-.lb-rank{font-size:1.3rem;width:28px;text-align:center;}
-.lb-name{flex:1;color:rgba(255,255,255,.85);}
-.lb-pts{color:#FFD700;font-weight:900;}
-.lb-row.new{color:#FFD700;}
-
-/* game over extras */
-#go-score{font:900 3rem/1 'Helvetica Neue',Arial;color:#FFD700;}
-#go-msg{font:400 1.1rem/1.4 Arial;color:#C8E6C9;text-align:center;max-width:280px;}
+#lb{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;padding:10px 18px;width:min(300px,86vw);}
+.lb-t{font:700 .8rem/1 Arial;color:#FFD700;margin-bottom:8px;text-align:center;letter-spacing:2px;}
+.lb-r{display:flex;align-items:center;gap:8px;padding:5px 0;
+  border-bottom:1px solid rgba(255,255,255,.07);font:600 .95rem/1 Arial;color:#fff;}
+.lb-r:last-child{border:none;}
+.lb-m{width:24px;text-align:center;font-size:1.1rem;}
+.lb-d{flex:1;color:rgba(255,255,255,.7);font-size:.85rem;}
+.lb-p{color:#FFD700;font-weight:900;}
+.lb-r.hi{background:rgba(255,215,0,.08);border-radius:6px;}
+#lb2{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;padding:10px 18px;width:min(300px,86vw);}
+#go-score{font:900 2.8rem/1 'Helvetica Neue',Arial;color:#FFD700;}
+#go-msg{font:400 1rem/1.4 Arial;color:#C8E6C9;text-align:center;max-width:260px;}
 </style>
 </head>
 <body>
 
-<!-- HUD -->
 <div id="hud">
   <div id="score-hud">⭐ <span id="sv">0</span></div>
-  <div id="lives-hud" id="lh">❤️❤️❤️</div>
-  <div id="power-bar-wrap">
-    <div id="power-label">✨ MAGIA</div>
-    <div id="power-bar-bg"><div id="power-bar"></div></div>
+  <div id="lives-hud">❤️❤️❤️</div>
+  <div id="power-wrap">
+    <div id="power-lbl">✨ MAGIA</div>
+    <div id="pbar-bg"><div id="pbar"></div></div>
   </div>
-  <div id="high-score-hud">🏆 <span id="hsv">0</span></div>
+  <div id="hs-hud">🏆 <span id="hsv">0</span></div>
 </div>
 
 <canvas id="c"></canvas>
 
-<!-- START SCREEN -->
+<!-- START -->
 <div class="screen" id="ss">
-  <div style="font-size:5rem;animation:float 2s ease-in-out infinite alternate">👸</div>
+  <div class="s-emoji">👸</div>
   <div class="s-title">Fuga da Princesa</div>
-  <div class="s-sub">Arrasta a princesa com o dedo para fugir dos dragões!<br><br>
-    💎 Jóias = pontos &nbsp;|&nbsp; ✨ Varinha = come dragões!
-  </div>
+  <div class="s-sub">Toca na princesa e arrasta para fugir dos dragões!<br><br>
+    💎 Jóias = pontos &nbsp;·&nbsp; ✨ Varinha = come dragões!</div>
   <button class="big-btn" onclick="startGame()">▶️ Jogar</button>
-  <div id="lb-wrap" id="lb-start"></div>
+  <div id="lb"></div>
 </div>
 
-<!-- GAME OVER SCREEN -->
+<!-- GAME OVER -->
 <div class="screen off" id="gs">
-  <div style="font-size:4rem">😭👸</div>
+  <div class="s-emoji">😭</div>
   <div class="s-title">O dragão apanhou-te!</div>
   <div id="go-score">0 pts</div>
   <div id="go-msg"></div>
-  <button class="big-btn" onclick="startGame()">🔄 Jogar outra vez</button>
-  <div id="lb-wrap2"></div>
+  <button class="big-btn" onclick="startGame()">🔄 Outra vez</button>
+  <div id="lb2"></div>
 </div>
 
-<style>
-@keyframes float{0%{transform:translateY(0)}100%{transform:translateY(-12px)}}
-</style>
-
 <script>
-// ═══════════════════════════════════════════════════════════════
-// CANVAS SETUP
-// ═══════════════════════════════════════════════════════════════
+// ─── CANVAS ────────────────────────────────────────────────
 const canvas = document.getElementById('c');
-const ctx    = canvas.getContext('2d');
-let W, H;
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0, DPR = 1;
 
-function resize(){
-  const dpr = window.devicePixelRatio || 1;
-  W = canvas.clientWidth;
-  H = canvas.clientHeight;
-  canvas.width  = W * dpr;
-  canvas.height = H * dpr;
-  ctx.scale(dpr, dpr);
+function resize() {
+  DPR = window.devicePixelRatio || 1;
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width  = W * DPR;
+  canvas.height = H * DPR;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.scale(DPR, DPR);
 }
-window.addEventListener('resize', resize);
+window.addEventListener('resize', () => { resize(); });
 resize();
 
-// ═══════════════════════════════════════════════════════════════
-// LEADERBOARD  (localStorage)
-// ═══════════════════════════════════════════════════════════════
-const LB_KEY = 'princess_lb_v1';
-function getBoard(){ try{ return JSON.parse(localStorage.getItem(LB_KEY))||[]; }catch{ return []; } }
-function saveScore(pts){
-  let board = getBoard();
-  board.push({ pts, date: new Date().toLocaleDateString('pt-PT') });
-  board.sort((a,b)=>b.pts-a.pts);
-  board = board.slice(0,5);
-  localStorage.setItem(LB_KEY, JSON.stringify(board));
-  return board;
+// ─── LEADERBOARD ───────────────────────────────────────────
+const LB_KEY = 'pfuga_v2';
+function getBoard() { try { return JSON.parse(localStorage.getItem(LB_KEY)) || []; } catch { return []; } }
+function saveScore(pts) {
+  let b = getBoard();
+  b.push({ pts, d: new Date().toLocaleDateString('pt-PT') });
+  b.sort((a, b) => b.pts - a.pts);
+  b = b.slice(0, 5);
+  localStorage.setItem(LB_KEY, JSON.stringify(b));
+  return b;
 }
-function renderBoard(containerId, newPts=-1){
-  const board = getBoard();
-  const el = document.getElementById(containerId);
-  if(!el) return;
+function renderLB(id, hi = -1) {
+  const b = getBoard();
   const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
-  el.innerHTML = `<div class="lb-title">🏆 Melhores Pontuações</div>` +
-    (board.length===0
-      ? `<div style="text-align:center;color:rgba(255,255,255,.4);font-size:.9rem;padding:8px">Ainda sem pontuações</div>`
-      : board.map((r,i)=>`
-        <div class="lb-row ${r.pts===newPts&&i===board.findIndex(x=>x.pts===newPts)?'new':''}">
-          <span class="lb-rank">${medals[i]||'·'}</span>
-          <span class="lb-name">${r.date}</span>
-          <span class="lb-pts">${r.pts} pts</span>
-        </div>`).join(''));
+  document.getElementById(id).innerHTML =
+    `<div class="lb-t">🏆 MELHORES</div>` +
+    (b.length === 0
+      ? `<div style="text-align:center;color:rgba(255,255,255,.35);font-size:.85rem;padding:6px">Ainda sem recordes</div>`
+      : b.map((r, i) => `<div class="lb-r ${r.pts===hi&&i===0?'hi':''}">
+          <span class="lb-m">${medals[i]}</span>
+          <span class="lb-d">${r.d}</span>
+          <span class="lb-p">${r.pts} pts</span>
+         </div>`).join(''));
 }
 
-// ═══════════════════════════════════════════════════════════════
-// DRAWING HELPERS
-// ═══════════════════════════════════════════════════════════════
-function drawPrincess(x, y, r, powered, hurt, t){
-  ctx.save();
-  ctx.translate(x, y);
-
-  const bob = Math.sin(t*0.004)*2;
-
-  if(powered){
-    // golden glow
-    ctx.shadowColor = '#FFD700';
-    ctx.shadowBlur  = 24 + Math.sin(t*0.01)*8;
+// ─── EMOJI DRAWING ─────────────────────────────────────────
+// Cache font sizes to avoid re-setting every frame
+let lastEmojiSize = 0;
+function emoji(e, x, y, size) {
+  if (size !== lastEmojiSize) {
+    ctx.font = `${size}px serif`;
+    lastEmojiSize = size;
   }
-  if(hurt){
-    // red flash
-    ctx.globalAlpha = 0.5 + 0.5*Math.sin(t*0.04);
-  }
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(e, x, y);
+}
 
-  // ── SKIRT ──
-  const skirtGrad = ctx.createRadialGradient(0, r*0.6, r*0.1, 0, r*0.8, r*1.4);
-  if(powered){ skirtGrad.addColorStop(0,'#FFE082'); skirtGrad.addColorStop(1,'#FF8F00'); }
-  else        { skirtGrad.addColorStop(0,'#F48FB1'); skirtGrad.addColorStop(1,'#C2185B'); }
-  ctx.beginPath();
-  ctx.moveTo(-r*0.7, r*0.4+bob);
-  ctx.bezierCurveTo(-r*1.4, r*0.6+bob, -r*1.5, r*2.2+bob, -r*0.05, r*2.2+bob);
-  ctx.bezierCurveTo(r*1.5, r*2.2+bob, r*1.4, r*0.6+bob, r*0.7, r*0.4+bob);
-  ctx.fillStyle = skirtGrad;
-  ctx.fill();
-  // skirt shine
-  ctx.beginPath();
-  ctx.ellipse(-r*0.3, r*1.4+bob, r*0.3, r*0.5, -0.3, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(255,255,255,.18)';
-  ctx.fill();
+// ─── STARS BACKGROUND (precomputed) ────────────────────────
+const STARS = Array.from({length:60}, () => ({
+  x: Math.random(), y: Math.random(),
+  s: 0.5 + Math.random() * 1.5,
+  p: Math.random() * Math.PI * 2
+}));
 
-  // ── BODY/BODICE ──
-  ctx.beginPath();
-  ctx.ellipse(0, r*0.3+bob, r*0.55, r*0.6, 0, 0, Math.PI*2);
-  ctx.fillStyle = powered ? '#FFB300' : '#E91E63';
-  ctx.fill();
-
-  // ── ARMS ──
-  ctx.strokeStyle = '#FFCC80';
-  ctx.lineWidth   = r*0.32;
-  ctx.lineCap     = 'round';
-  // left arm
-  ctx.beginPath();
-  ctx.moveTo(-r*0.5, r*0.1+bob);
-  ctx.quadraticCurveTo(-r*1.1, r*0.4+bob, -r*0.9, r*0.9+bob);
-  ctx.stroke();
-  // right arm
-  ctx.beginPath();
-  ctx.moveTo(r*0.5, r*0.1+bob);
-  ctx.quadraticCurveTo(r*1.1, r*0.4+bob, r*0.9, r*0.9+bob);
-  ctx.stroke();
-
-  // ── NECK ──
-  ctx.beginPath();
-  ctx.ellipse(0, -r*0.25+bob, r*0.22, r*0.3, 0, 0, Math.PI*2);
-  ctx.fillStyle = '#FFCC80';
-  ctx.fill();
-
-  // ── HEAD ──
-  ctx.shadowBlur = powered ? 20 : 0;
-  ctx.beginPath();
-  ctx.ellipse(0, -r+bob, r*0.72, r*0.8, 0, 0, Math.PI*2);
-  ctx.fillStyle = '#FFCC80';
-  ctx.fill();
-  ctx.shadowBlur = 0;
-
-  // ── HAIR BACK ──
-  ctx.beginPath();
-  ctx.ellipse(0, -r*0.9+bob, r*0.74, r*0.82, 0, 0, Math.PI*2);
-  ctx.fillStyle = '#5D4037';
-  ctx.fill();
-  // hair sides
-  ctx.beginPath();
-  ctx.ellipse(-r*0.55, -r*0.6+bob, r*0.22, r*0.5, 0.4, 0, Math.PI*2);
-  ctx.fillStyle = '#5D4037';
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(r*0.55, -r*0.6+bob, r*0.22, r*0.5, -0.4, 0, Math.PI*2);
-  ctx.fillStyle = '#5D4037';
-  ctx.fill();
-
-  // ── FACE ──
-  // eyes
-  ctx.fillStyle = '#fff';
-  ctx.beginPath(); ctx.ellipse(-r*0.24, -r*1.0+bob, r*0.18, r*0.2, 0,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse( r*0.24, -r*1.0+bob, r*0.18, r*0.2, 0,0,Math.PI*2); ctx.fill();
-  // iris
-  ctx.fillStyle = powered ? '#FF6F00' : '#3E2723';
-  ctx.beginPath(); ctx.arc(-r*0.22, -r*1.0+bob, r*0.11, 0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc( r*0.22, -r*1.0+bob, r*0.11, 0,Math.PI*2); ctx.fill();
-  // shine
-  ctx.fillStyle='#fff';
-  ctx.beginPath(); ctx.arc(-r*0.18, -r*1.04+bob, r*0.05, 0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc( r*0.26, -r*1.04+bob, r*0.05, 0,Math.PI*2); ctx.fill();
-  // smile
-  ctx.strokeStyle = '#C2185B'; ctx.lineWidth = r*0.07; ctx.lineCap='round';
-  ctx.beginPath();
-  ctx.arc(0, -r*0.88+bob, r*0.22, 0.2, Math.PI-0.2);
-  ctx.stroke();
-  // nose
-  ctx.strokeStyle='#FFAB91'; ctx.lineWidth=r*0.06;
-  ctx.beginPath(); ctx.arc(0,-r*0.95+bob,r*0.07,0.3,Math.PI-0.3); ctx.stroke();
-  // cheeks
-  ctx.fillStyle='rgba(244,143,177,.5)';
-  ctx.beginPath(); ctx.ellipse(-r*0.44,-r*0.92+bob,r*0.18,r*0.1,0,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse( r*0.44,-r*0.92+bob,r*0.18,r*0.1,0,0,Math.PI*2); ctx.fill();
-
-  // ── HAIR FRONT / FRINGE ──
-  ctx.fillStyle = '#5D4037';
-  // left strand
-  ctx.beginPath(); ctx.ellipse(-r*0.3,-r*1.58+bob,r*0.18,r*0.28,-0.3,0,Math.PI*2); ctx.fill();
-  // centre
-  ctx.beginPath(); ctx.ellipse(0,-r*1.62+bob,r*0.2,r*0.25,0,0,Math.PI*2); ctx.fill();
-  // right strand
-  ctx.beginPath(); ctx.ellipse(r*0.3,-r*1.58+bob,r*0.18,r*0.28,0.3,0,Math.PI*2); ctx.fill();
-
-  // ── CROWN ──
-  const cy = powered ? '#FFD700' : '#FFD700';
-  ctx.fillStyle = cy;
-  ctx.shadowColor = powered ? '#FFD700' : 'transparent';
-  ctx.shadowBlur  = powered ? 12 : 0;
-  const crY = -r*1.75+bob;
-  ctx.beginPath();
-  ctx.moveTo(-r*0.5, crY+r*0.12);
-  ctx.lineTo(-r*0.35, crY-r*0.12);
-  ctx.lineTo(-r*0.18, crY+r*0.04);
-  ctx.lineTo(0, crY-r*0.2);
-  ctx.lineTo(r*0.18, crY+r*0.04);
-  ctx.lineTo(r*0.35, crY-r*0.12);
-  ctx.lineTo(r*0.5, crY+r*0.12);
-  ctx.closePath();
-  ctx.fill();
-  // crown gems
-  ['#E91E63','#4FC3F7','#E91E63'].forEach((c,i)=>{
-    ctx.fillStyle=c; ctx.shadowColor=c; ctx.shadowBlur=6;
-    ctx.beginPath(); ctx.arc((i-1)*r*0.25, crY+r*0.02, r*0.07, 0,Math.PI*2); ctx.fill();
+function drawBg(t) {
+  // gradient sky
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, '#050010');
+  g.addColorStop(1, '#1a004a');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  // stars
+  STARS.forEach(s => {
+    const a = 0.3 + 0.7 * Math.abs(Math.sin(t * 0.001 + s.p));
+    ctx.globalAlpha = a;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(s.x * W, s.y * H, s.s, 0, Math.PI * 2);
+    ctx.fill();
   });
-  ctx.shadowBlur=0;
-
-  // ── MAGIC WAND (when powered) ──
-  if(powered){
-    ctx.strokeStyle='#FFD700'; ctx.lineWidth=r*0.1; ctx.lineCap='round';
-    ctx.shadowColor='#FFD700'; ctx.shadowBlur=10;
-    ctx.beginPath(); ctx.moveTo(r*0.85, r*0.85+bob); ctx.lineTo(r*0.3,r*0.2+bob); ctx.stroke();
-    ctx.fillStyle='#fff'; ctx.shadowBlur=14;
-    ctx.beginPath(); ctx.arc(r*0.3,r*0.2+bob,r*0.15,0,Math.PI*2); ctx.fill();
-    // sparkle lines
-    for(let i=0;i<6;i++){
-      const a=i/6*Math.PI*2+t*0.005;
-      ctx.beginPath();
-      ctx.moveTo(r*0.3+Math.cos(a)*r*0.18,r*0.2+bob+Math.sin(a)*r*0.18);
-      ctx.lineTo(r*0.3+Math.cos(a)*r*0.3, r*0.2+bob+Math.sin(a)*r*0.3);
-      ctx.stroke();
-    }
-    ctx.shadowBlur=0;
-  }
-
-  ctx.restore();
+  ctx.globalAlpha = 1;
 }
 
-function drawDragon(x, y, r, fleeing, t, idx){
-  ctx.save();
-  ctx.translate(x, y);
-
-  const wave = Math.sin(t*0.005 + idx) * 0.15;
-  ctx.rotate(wave);
-
-  if(fleeing){
-    ctx.globalAlpha = 0.7;
-    ctx.shadowColor = '#9C27B0';
-    ctx.shadowBlur  = 16;
-  } else {
-    ctx.shadowColor = '#F44336';
-    ctx.shadowBlur  = 10 + Math.sin(t*0.008)*4;
+// ─── PARTICLES ─────────────────────────────────────────────
+let particles = [];
+function burst(x, y, emojis, n = 8) {
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + Math.random() * 0.5;
+    const spd = 2 + Math.random() * 4;
+    particles.push({
+      x, y,
+      vx: Math.cos(a) * spd,
+      vy: Math.sin(a) * spd - 2,
+      e: emojis[Math.floor(Math.random() * emojis.length)],
+      life: 35 + Math.random() * 20 | 0,
+      maxLife: 55,
+      size: 18 + Math.random() * 10 | 0
+    });
   }
-
-  const bodyColor = fleeing ? '#7B1FA2' : '#2E7D32';
-  const bellyColor= fleeing ? '#CE93D8' : '#A5D6A7';
-  const eyeColor  = fleeing ? '#E1BEE7' : '#FFEB3B';
-
-  // ── TAIL ──
-  ctx.strokeStyle = bodyColor; ctx.lineWidth = r*0.45; ctx.lineCap='round';
-  ctx.beginPath();
-  ctx.moveTo(0, r*0.5);
-  ctx.quadraticCurveTo(r*0.9, r*1.5, r*0.4, r*2.2);
-  ctx.stroke();
-  // tail tip
-  ctx.fillStyle=fleeing?'#CE93D8':'#1B5E20';
-  ctx.beginPath();
-  ctx.moveTo(r*0.4,r*2.2); ctx.lineTo(r*0.8,r*2.0); ctx.lineTo(r*0.2,r*1.8); ctx.closePath();
-  ctx.fill();
-
-  // ── WINGS ──
-  ctx.fillStyle = fleeing ? 'rgba(123,31,162,.6)' : 'rgba(27,94,32,.7)';
-  // left wing
-  ctx.beginPath();
-  ctx.moveTo(-r*0.3, -r*0.2);
-  ctx.bezierCurveTo(-r*1.8, -r*1.2, -r*2.0, r*0.4, -r*0.8, r*0.4);
-  ctx.bezierCurveTo(-r*1.2, 0, -r*0.6, -r*0.4, -r*0.3, -r*0.2);
-  ctx.fill();
-  // wing membrane lines
-  ctx.strokeStyle=fleeing?'rgba(206,147,216,.5)':'rgba(165,214,167,.5)'; ctx.lineWidth=r*0.05;
-  ctx.beginPath(); ctx.moveTo(-r*0.3,-r*0.2); ctx.lineTo(-r*1.6,-r*0.8); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(-r*0.3,-r*0.2); ctx.lineTo(-r*1.8,r*0.1); ctx.stroke();
-  // right wing
-  ctx.fillStyle = fleeing ? 'rgba(123,31,162,.6)' : 'rgba(27,94,32,.7)';
-  ctx.beginPath();
-  ctx.moveTo(r*0.3, -r*0.2);
-  ctx.bezierCurveTo(r*1.8, -r*1.2, r*2.0, r*0.4, r*0.8, r*0.4);
-  ctx.bezierCurveTo(r*1.2, 0, r*0.6, -r*0.4, r*0.3, -r*0.2);
-  ctx.fill();
-  ctx.strokeStyle=fleeing?'rgba(206,147,216,.5)':'rgba(165,214,167,.5)';
-  ctx.beginPath(); ctx.moveTo(r*0.3,-r*0.2); ctx.lineTo(r*1.6,-r*0.8); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(r*0.3,-r*0.2); ctx.lineTo(r*1.8,r*0.1); ctx.stroke();
-
-  // ── BODY ──
-  ctx.shadowColor = fleeing ? '#9C27B0' : '#F44336';
-  ctx.fillStyle = bodyColor;
-  ctx.beginPath();
-  ctx.ellipse(0, 0, r*0.8, r*1.1, 0, 0, Math.PI*2);
-  ctx.fill();
-  // belly
-  ctx.fillStyle = bellyColor;
-  ctx.beginPath();
-  ctx.ellipse(0, r*0.2, r*0.42, r*0.65, 0, 0, Math.PI*2);
-  ctx.fill();
-  // belly segments
-  ctx.strokeStyle='rgba(0,0,0,.12)'; ctx.lineWidth=r*0.04;
-  [-0.1, 0.1, 0.3, 0.5].forEach(oy=>{
-    ctx.beginPath(); ctx.ellipse(0, r*(0.2+oy), r*0.38, r*0.08, 0, 0, Math.PI*2); ctx.stroke();
-  });
-
-  // ── HEAD ──
-  ctx.shadowBlur=0;
-  ctx.fillStyle = bodyColor;
-  ctx.beginPath();
-  ctx.ellipse(0, -r*1.05, r*0.7, r*0.65, 0, 0, Math.PI*2);
-  ctx.fill();
-  // snout
-  ctx.beginPath();
-  ctx.ellipse(0, -r*0.68, r*0.45, r*0.32, 0, 0, Math.PI*2);
-  ctx.fill();
-  // nostrils
-  ctx.fillStyle='rgba(0,0,0,.3)';
-  ctx.beginPath(); ctx.ellipse(-r*0.12,-r*0.6,r*0.06,r*0.04,0,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse( r*0.12,-r*0.6,r*0.06,r*0.04,0,0,Math.PI*2); ctx.fill();
-
-  // ── HORNS ──
-  ctx.fillStyle = fleeing?'#CE93D8':'#1B5E20';
-  ctx.beginPath(); ctx.moveTo(-r*0.32,-r*1.6); ctx.lineTo(-r*0.48,-r*1.6); ctx.lineTo(-r*0.4,-r*1.95); ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.moveTo( r*0.32,-r*1.6); ctx.lineTo( r*0.48,-r*1.6); ctx.lineTo( r*0.4,-r*1.95); ctx.closePath(); ctx.fill();
-
-  // ── EYES ──
-  ctx.fillStyle='#fff';
-  ctx.beginPath(); ctx.ellipse(-r*0.28,-r*1.1,r*0.2,r*0.22,0,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse( r*0.28,-r*1.1,r*0.2,r*0.22,0,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle=eyeColor;
-  ctx.beginPath(); ctx.arc(-r*0.28,-r*1.08,r*0.13,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc( r*0.28,-r*1.08,r*0.13,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#000';
-  ctx.beginPath(); ctx.arc(-r*0.26,-r*1.06,r*0.07,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc( r*0.28,-r*1.06,r*0.07,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#fff';
-  ctx.beginPath(); ctx.arc(-r*0.23,-r*1.1,r*0.03,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc( r*0.31,-r*1.1,r*0.03,0,Math.PI*2); ctx.fill();
-
-  // ── FIRE (when not fleeing) ──
-  if(!fleeing){
-    const ft=t*0.012+idx;
-    ctx.save();
-    ctx.translate(0,-r*0.55);
-    for(let i=0;i<3;i++){
-      const sc=0.7+i*0.15+Math.sin(ft+i)*0.1;
-      ctx.fillStyle=[
-        `rgba(255,100,0,${0.5-i*0.1})`,
-        `rgba(255,200,0,${0.4-i*0.08})`,
-        `rgba(255,255,100,${0.3-i*0.06})`][i];
-      ctx.beginPath();
-      ctx.ellipse(0,-r*0.3*sc,r*0.12*sc,r*0.35*sc,Math.sin(ft+i)*0.3,0,Math.PI*2);
-      ctx.fill();
-    }
-    ctx.restore();
-  } else {
-    // sad face marks
-    ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=r*0.05; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(-r*0.15,-r*0.72); ctx.lineTo(r*0.15,-r*0.62); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(r*0.15,-r*0.72); ctx.lineTo(-r*0.15,-r*0.62); ctx.stroke();
-  }
-
-  ctx.restore();
 }
 
-function drawJewel(x, y, r, t, idx){
-  ctx.save();
-  ctx.translate(x, y);
-  const pulse = Math.sin(t*0.005 + idx*1.3)*0.08;
-  ctx.scale(1+pulse, 1+pulse);
-  const colors=['#E91E63','#9C27B0','#00BCD4','#FFD700','#4CAF50'];
-  const col = colors[idx % colors.length];
-  ctx.shadowColor = col; ctx.shadowBlur = 12+Math.sin(t*0.006+idx)*4;
-  // gem shape
-  ctx.fillStyle = col;
-  ctx.beginPath();
-  ctx.moveTo(0,-r); ctx.lineTo(r*0.7,-r*0.2); ctx.lineTo(r*0.5,r*0.8);
-  ctx.lineTo(-r*0.5,r*0.8); ctx.lineTo(-r*0.7,-r*0.2); ctx.closePath();
-  ctx.fill();
-  // facet
-  ctx.fillStyle='rgba(255,255,255,.35)';
-  ctx.beginPath();
-  ctx.moveTo(0,-r); ctx.lineTo(r*0.4,-r*0.1); ctx.lineTo(0,r*0.2); ctx.lineTo(-r*0.4,-r*0.1); ctx.closePath();
-  ctx.fill();
-  ctx.shadowBlur=0;
-  ctx.restore();
+// ─── GAME STATE ────────────────────────────────────────────
+let princess, dragons, jewels, wands;
+let score, lives, powered, powerTimer;
+let hurtCD = 0;
+let spawnInterval, spawnCD, dragonSpeed;
+let gameRunning = false;
+let frameId;
+let t = 0;
+
+// input — direct position, no lag
+let touching = false;
+let touchX = 0, touchY = 0;
+let grabbedPrincess = false;
+
+// ─── INPUT ─────────────────────────────────────────────────
+function getXY(e) {
+  const src = e.touches ? e.touches[0] : e;
+  return { x: src.clientX, y: src.clientY };
+}
+function tryGrab(x, y) {
+  if (!gameRunning) return;
+  const d = Math.hypot(x - princess.x, y - princess.y);
+  if (d < princess.r * 3) { grabbedPrincess = true; }
+}
+function onDown(e) { e.preventDefault(); const p = getXY(e); touchX = p.x; touchY = p.y; touching = true; tryGrab(p.x, p.y); }
+function onMove(e) { e.preventDefault(); if (!touching) return; const p = getXY(e); touchX = p.x; touchY = p.y; }
+function onUp(e)   { e.preventDefault(); touching = false; grabbedPrincess = false; }
+
+canvas.addEventListener('touchstart', onDown, { passive: false });
+canvas.addEventListener('touchmove',  onMove, { passive: false });
+canvas.addEventListener('touchend',   onUp,   { passive: false });
+canvas.addEventListener('touchcancel',onUp,   { passive: false });
+canvas.addEventListener('mousedown',  onDown, { passive: false });
+canvas.addEventListener('mousemove',  onMove, { passive: false });
+canvas.addEventListener('mouseup',    onUp,   { passive: false });
+
+// ─── SPAWN HELPERS ─────────────────────────────────────────
+function edgePos() {
+  const side = Math.random() * 4 | 0;
+  if (side === 0) return { x: Math.random() * W, y: -50 };
+  if (side === 1) return { x: W + 50, y: Math.random() * H };
+  if (side === 2) return { x: Math.random() * W, y: H + 50 };
+  return { x: -50, y: Math.random() * H };
+}
+function rndPos(margin = 80) {
+  return { x: margin + Math.random() * (W - margin * 2), y: margin + Math.random() * (H - margin * 2) };
 }
 
-function drawWand(x, y, r, t, idx){
-  ctx.save();
-  ctx.translate(x,y);
-  const ang = Math.sin(t*0.006+idx)*0.2;
-  ctx.rotate(ang);
-  ctx.shadowColor='#FFD700'; ctx.shadowBlur=16;
-  // stick
-  ctx.strokeStyle='#8D6E63'; ctx.lineWidth=r*0.2; ctx.lineCap='round';
-  ctx.beginPath(); ctx.moveTo(0,r*0.9); ctx.lineTo(0,-r*0.5); ctx.stroke();
-  // star
-  ctx.fillStyle='#FFD700';
-  for(let i=0;i<5;i++){
-    const a=i/5*Math.PI*2-Math.PI/2;
-    const ia=a+Math.PI/5;
-    if(i===0) ctx.beginPath();
-    ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
-    ctx.lineTo(Math.cos(ia)*r*0.42, Math.sin(ia)*r*0.42);
-  }
-  ctx.closePath(); ctx.fill();
-  // sparkles
-  ctx.fillStyle='#fff';
-  for(let i=0;i<6;i++){
-    const a=i/6*Math.PI*2+t*0.008;
-    const d=r*(1.1+Math.sin(t*0.01+i)*0.2);
-    ctx.beginPath(); ctx.arc(Math.cos(a)*d,Math.sin(a)*d,r*0.1,0,Math.PI*2); ctx.fill();
-  }
-  ctx.shadowBlur=0;
-  ctx.restore();
-}
-
-function drawParticle(p){
-  ctx.save();
-  ctx.globalAlpha=p.life/p.maxLife;
-  ctx.fillStyle=p.color;
-  ctx.shadowColor=p.color; ctx.shadowBlur=8;
-  ctx.beginPath();
-  if(p.star){
-    for(let i=0;i<5;i++){
-      const a=i/5*Math.PI*2-Math.PI/2;
-      const ia=a+Math.PI/5;
-      if(i===0) ctx.moveTo(p.x+Math.cos(a)*p.r,p.y+Math.sin(a)*p.r);
-      else{ ctx.lineTo(p.x+Math.cos(a)*p.r,p.y+Math.sin(a)*p.r); }
-      ctx.lineTo(p.x+Math.cos(ia)*p.r*0.4,p.y+Math.sin(ia)*p.r*0.4);
-    }
-    ctx.closePath();
-  } else {
-    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-  }
-  ctx.fill();
-  ctx.restore();
-}
-
-// ═══════════════════════════════════════════════════════════════
-// GAME STATE
-// ═══════════════════════════════════════════════════════════════
-let princess, dragons, jewels, wands, particles;
-let score, lives, powered, powerTimer, gameRunning;
-let t=0; // frame counter / time
-let dragFollowing=false;
-let fingerX=0, fingerY=0;
-let hurtCooldown=0;
-// dragon spawn
-let nextDragonIn=0, dragonSpawnInterval=300, dragonSpawnDecay=0.994;
-let dragonMaxSpeed=1.2;
-
-function startGame(){
+// ─── START ─────────────────────────────────────────────────
+function startGame() {
   document.getElementById('ss').classList.add('off');
   document.getElementById('gs').classList.add('off');
 
-  score=0; lives=3; powered=false; powerTimer=0; gameRunning=true;
-  t=0; hurtCooldown=0;
-  dragonSpawnInterval=300; dragonMaxSpeed=1.2; nextDragonIn=120;
-  particles=[];
+  score = 0; lives = 3; powered = false; powerTimer = 0;
+  hurtCD = 0; t = 0; particles = [];
+  spawnInterval = 280; spawnCD = 100; dragonSpeed = 1.4;
 
-  // princess starts centre
-  princess = { x:W/2, y:H/2, r:26, vx:0, vy:0 };
-
-  // initial single dragon from a random edge
-  dragons=[spawnDragon()];
-
-  // spawn initial jewels and wands
-  jewels=[]; wands=[];
-  for(let i=0;i<6;i++) jewels.push(spawnJewel());
-  wands.push(spawnWand());
+  princess = { x: W / 2, y: H / 2, r: 28 };
+  dragons  = [{ ...edgePos(), r: 26, vx: 0, vy: 0 }];
+  jewels   = Array.from({ length: 6 }, () => ({ ...rndPos(), r: 18, ei: Math.random() * 5 | 0 }));
+  wands    = [{ ...rndPos(100), r: 20 }];
 
   updateHUD();
-  document.getElementById('power-bar-wrap').classList.remove('show');
+  document.getElementById('power-wrap').classList.remove('show');
+  const board = getBoard();
+  document.getElementById('hsv').textContent = board.length ? board[0].pts : 0;
 
-  // load high score
-  const board=getBoard();
-  document.getElementById('hsv').textContent = board.length?board[0].pts:0;
-
-  if(!gameRunning) requestAnimationFrame(loop);
+  gameRunning = true;
+  if (!frameId) frameId = requestAnimationFrame(loop);
 }
 
-function spawnDragon(){
-  const side=Math.floor(Math.random()*4);
-  let x,y;
-  if(side===0){x=Math.random()*W;y=-40;}
-  else if(side===1){x=W+40;y=Math.random()*H;}
-  else if(side===2){x=Math.random()*W;y=H+40;}
-  else{x=-40;y=Math.random()*H;}
-  return {x,y,r:28,vx:0,vy:0};
+// ─── HUD ───────────────────────────────────────────────────
+function updateHUD() {
+  document.getElementById('sv').textContent = score;
+  document.getElementById('lives-hud').textContent = '❤️'.repeat(lives) + '🖤'.repeat(Math.max(0, 3 - lives));
 }
 
-function spawnJewel(){
-  return {
-    x: 60+Math.random()*(W-120),
-    y: 60+Math.random()*(H-120),
-    r: 14,
-    idx: Math.floor(Math.random()*5)
-  };
-}
-function spawnWand(){
-  return {
-    x: 60+Math.random()*(W-120),
-    y: 80+Math.random()*(H-160),
-    r: 18
-  };
-}
-
-function updateHUD(){
-  document.getElementById('sv').textContent=score;
-  document.getElementById('lh').textContent='❤️'.repeat(lives)+'🖤'.repeat(3-lives);
-}
-
-// ═══════════════════════════════════════════════════════════════
-// TOUCH / MOUSE INPUT
-// ═══════════════════════════════════════════════════════════════
-function getEvt(e){ return e.touches?{x:e.touches[0].clientX,y:e.touches[0].clientY}:{x:e.clientX,y:e.clientY}; }
-
-canvas.addEventListener('touchstart', e=>{
-  e.preventDefault();
-  const pos=getEvt(e);
-  const r=canvas.getBoundingClientRect();
-  const fx=(pos.x-r.left)*(W/r.width);
-  const fy=(pos.y-r.top)*(H/r.height);
-  const dx=fx-princess.x, dy=fy-princess.y;
-  if(Math.hypot(dx,dy)<princess.r*2.5){ dragFollowing=true; fingerX=fx; fingerY=fy; }
-},{passive:false});
-
-canvas.addEventListener('touchmove', e=>{
-  e.preventDefault();
-  if(!dragFollowing) return;
-  const pos=getEvt(e);
-  const r=canvas.getBoundingClientRect();
-  fingerX=(pos.x-r.left)*(W/r.width);
-  fingerY=(pos.y-r.top)*(H/r.height);
-},{passive:false});
-
-canvas.addEventListener('touchend', ()=>{ dragFollowing=false; });
-
-canvas.addEventListener('mousedown', e=>{
-  const r=canvas.getBoundingClientRect();
-  const fx=(e.clientX-r.left)*(W/r.width);
-  const fy=(e.clientY-r.top)*(H/r.height);
-  if(Math.hypot(fx-princess.x,fy-princess.y)<princess.r*2.5){ dragFollowing=true; fingerX=fx; fingerY=fy; }
-});
-canvas.addEventListener('mousemove', e=>{
-  if(!dragFollowing) return;
-  const r=canvas.getBoundingClientRect();
-  fingerX=(e.clientX-r.left)*(W/r.width);
-  fingerY=(e.clientY-r.top)*(H/r.height);
-});
-canvas.addEventListener('mouseup', ()=>{ dragFollowing=false; });
-
-// ═══════════════════════════════════════════════════════════════
-// GAME LOOP
-// ═══════════════════════════════════════════════════════════════
-function loop(){
-  requestAnimationFrame(loop);
-  if(!gameRunning) return;
+// ─── MAIN LOOP ─────────────────────────────────────────────
+function loop() {
+  frameId = requestAnimationFrame(loop);
+  if (!gameRunning) return;
   t++;
 
-  // ── BACKGROUND ──
-  const bg = ctx.createLinearGradient(0,0,0,H);
-  bg.addColorStop(0,'#0a0020'); bg.addColorStop(1,'#1a0040');
-  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  // ── BG ──
+  drawBg(t);
 
-  // starfield
-  ctx.fillStyle='rgba(255,255,255,.6)';
-  for(let i=0;i<80;i++){
-    const sx=(i*137.5+t*0.05)%W;
-    const sy=(i*97.3)%H;
-    const ss=0.5+Math.sin(t*0.02+i)*0.5;
-    ctx.beginPath(); ctx.arc(sx,sy,ss,0,Math.PI*2); ctx.fill();
+  // ── PRINCESS MOVEMENT — teleport to finger, no lag ──
+  if (grabbedPrincess && touching) {
+    // Snap directly to finger with tiny smoothing just to avoid jitter
+    princess.x += (touchX - princess.x) * 0.7;
+    princess.y += (touchY - princess.y) * 0.7;
   }
-  // ground glow
-  const gg=ctx.createRadialGradient(W/2,H,0,W/2,H,H*0.7);
-  gg.addColorStop(0,'rgba(103,58,183,.15)'); gg.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=gg; ctx.fillRect(0,0,W,H);
-
-  // ── PRINCESS MOVEMENT ──
-  if(dragFollowing){
-    const dx=fingerX-princess.x, dy=fingerY-princess.y;
-    const dist=Math.hypot(dx,dy);
-    if(dist>2){
-      const spd=Math.min(dist*0.22, 14);
-      princess.vx=dx/dist*spd; princess.vy=dy/dist*spd;
-    } else { princess.vx=0; princess.vy=0; }
-  } else {
-    princess.vx*=0.88; princess.vy*=0.88;
-  }
-  princess.x=Math.max(princess.r, Math.min(W-princess.r, princess.x+princess.vx));
-  princess.y=Math.max(princess.r*2.5, Math.min(H-princess.r*2.5, princess.y+princess.vy));
-
-  // ── DRAG TARGET RING ──
-  if(dragFollowing){
-    ctx.save();
-    ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=2; ctx.setLineDash([4,6]);
-    ctx.beginPath(); ctx.moveTo(princess.x,princess.y); ctx.lineTo(fingerX,fingerY); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.strokeStyle='rgba(255,255,255,.4)'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.arc(fingerX,fingerY,12,0,Math.PI*2); ctx.stroke();
-    ctx.restore();
-  }
+  // clamp
+  const hudH = 56 + (window.screen?.height ? 0 : 0);
+  princess.x = Math.max(princess.r, Math.min(W - princess.r, princess.x));
+  princess.y = Math.max(hudH + princess.r, Math.min(H - princess.r, princess.y));
 
   // ── SPAWN DRAGONS ──
-  nextDragonIn--;
-  if(nextDragonIn<=0){
-    dragons.push(spawnDragon());
-    dragonSpawnInterval=Math.max(60, dragonSpawnInterval*dragonSpawnDecay);
-    nextDragonIn=Math.floor(dragonSpawnInterval);
-    // gradually speed up
-    dragonMaxSpeed=Math.min(3.5, dragonMaxSpeed+0.06);
+  spawnCD--;
+  if (spawnCD <= 0) {
+    dragons.push({ ...edgePos(), r: 26, vx: 0, vy: 0 });
+    spawnInterval = Math.max(55, spawnInterval * 0.96);
+    spawnCD = spawnInterval | 0;
+    dragonSpeed = Math.min(3.2, dragonSpeed + 0.07);
   }
 
-  // ── DRAGON MOVEMENT ──
-  const DRAGON_R = 28;
-  dragons.forEach((d,di)=>{
-    let tx=princess.x, ty=princess.y;
-    if(powered){ // flee from princess
-      tx=princess.x+(princess.x-d.x)*2;
-      ty=princess.y+(princess.y-d.y)*2;
-    }
-    const dx=tx-d.x, dy=ty-d.y;
-    const dist=Math.hypot(dx,dy)||1;
-    const spd=powered?dragonMaxSpeed*0.9:dragonMaxSpeed;
-    const steer=0.06;
-    d.vx=d.vx*(1-steer)+(dx/dist*spd)*steer;
-    d.vy=d.vy*(1-steer)+(dy/dist*spd)*steer;
-    // separation from other dragons
-    dragons.forEach((d2,di2)=>{
-      if(di===di2) return;
-      const sdx=d.x-d2.x, sdy=d.y-d2.y;
-      const sd=Math.hypot(sdx,sdy);
-      if(sd<DRAGON_R*2.5 && sd>0){
-        d.vx+=sdx/sd*0.6; d.vy+=sdy/sd*0.6;
-      }
-    });
-    // keep on screen
-    if(powered){
-      d.x=Math.max(-80,Math.min(W+80,d.x+d.vx));
-      d.y=Math.max(-80,Math.min(H+80,d.y+d.vy));
+  // ── DRAGON AI ── simple seek, very responsive
+  const FLEE_SPEED = dragonSpeed * 1.1;
+  dragons.forEach((d, di) => {
+    let tx, ty;
+    if (powered) {
+      // flee away from princess
+      const dx = d.x - princess.x, dy = d.y - princess.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      tx = d.x + dx / dist * 200;
+      ty = d.y + dy / dist * 200;
     } else {
-      d.x+=d.vx; d.y+=d.vy;
+      tx = princess.x; ty = princess.y;
     }
+    const dx = tx - d.x, dy = ty - d.y;
+    const dist = Math.hypot(dx, dy) || 1;
+    const spd = powered ? FLEE_SPEED : dragonSpeed;
+    // direct velocity — no smoothing lag
+    d.vx = (dx / dist) * spd;
+    d.vy = (dy / dist) * spd;
+    // slight separation
+    dragons.forEach((d2, di2) => {
+      if (di === di2) return;
+      const sdx = d.x - d2.x, sdy = d.y - d2.y;
+      const sd = Math.hypot(sdx, sdy);
+      if (sd < 55 && sd > 0) { d.vx += sdx / sd * 0.5; d.vy += sdy / sd * 0.5; }
+    });
+    d.x += d.vx; d.y += d.vy;
   });
 
   // ── POWER TIMER ──
-  if(powered){
+  if (powered) {
     powerTimer--;
-    const pct=powerTimer/600;
-    document.getElementById('power-bar').style.width=(pct*100)+'%';
-    if(powerTimer<=0){
-      powered=false;
-      document.getElementById('power-bar-wrap').classList.remove('show');
+    document.getElementById('pbar').style.width = (powerTimer / 600 * 100) + '%';
+    if (powerTimer <= 0) {
+      powered = false;
+      document.getElementById('power-wrap').classList.remove('show');
     }
   }
 
-  // ── COLLISION: princess vs dragons ──
-  if(hurtCooldown>0) hurtCooldown--;
-  dragons = dragons.filter((d,di)=>{
-    const dist=Math.hypot(d.x-princess.x,d.y-princess.y);
-    if(dist<(princess.r+d.r)*0.85){
-      if(powered){
-        // eat dragon!
-        score+=5;
-        spawnBurst(d.x,d.y,'#9C27B0',12,true);
-        spawnBurst(d.x,d.y,'#FFD700',8,false);
-        updateHUD();
+  // ── HURT COOLDOWN ──
+  if (hurtCD > 0) hurtCD--;
+
+  // ── DRAW JEWELS ──
+  const JEWEL_EMOJIS = ['💎','💍','🔮','🌟','✨'];
+  jewels.forEach(j => {
+    ctx.globalAlpha = 0.9 + 0.1 * Math.sin(t * 0.05 + j.ei);
+    emoji(JEWEL_EMOJIS[j.ei], j.x, j.y, 32);
+    ctx.globalAlpha = 1;
+  });
+
+  // ── DRAW WANDS ──
+  wands.forEach(w => {
+    const sc = 1 + 0.1 * Math.sin(t * 0.06);
+    ctx.save();
+    ctx.translate(w.x, w.y);
+    ctx.scale(sc, sc);
+    emoji('🪄', 0, 0, 34);
+    // glow ring
+    ctx.globalAlpha = 0.3 + 0.2 * Math.sin(t * 0.05);
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  });
+
+  // ── DRAW DRAGONS ──
+  const DRAGON_E  = powered ? '😱' : '🐉';
+  const DRAGON_FIRE = ['🔥','💥'];
+  dragons.forEach((d, i) => {
+    // shadow
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = powered ? '#9C27B0' : '#F44336';
+    ctx.beginPath(); ctx.ellipse(d.x, d.y + 22, 20, 7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+    // fire when chasing
+    if (!powered && t % 12 < 6) {
+      emoji(DRAGON_FIRE[i % 2], d.x, d.y - 36, 20);
+    }
+    emoji(DRAGON_E, d.x, d.y, 46);
+    // scared stars when fleeing
+    if (powered && Math.floor(t / 8) % 2 === 0) {
+      emoji('⭐', d.x + 28 + Math.sin(t * 0.1 + i) * 6, d.y - 30, 16);
+    }
+  });
+
+  // ── DRAW PRINCESS ──
+  const PRINCESS_E = powered ? '🧙‍♀️' : (hurtCD > 0 && Math.floor(t / 6) % 2 === 0 ? '😵' : '👸');
+  // shadow
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = powered ? '#FFD700' : '#9C27B0';
+  ctx.beginPath(); ctx.ellipse(princess.x, princess.y + 24, 22, 8, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+  // glow when powered
+  if (powered) {
+    ctx.save();
+    ctx.shadowColor = '#FFD700';
+    ctx.shadowBlur = 24 + Math.sin(t * 0.08) * 8;
+    emoji(PRINCESS_E, princess.x, princess.y, 52);
+    ctx.restore();
+  } else {
+    emoji(PRINCESS_E, princess.x, princess.y, 52);
+  }
+  // grab indicator when not touching
+  if (!grabbedPrincess && Math.floor(t / 30) % 2 === 0) {
+    ctx.globalAlpha = 0.4;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(princess.x, princess.y, princess.r * 2.2 + Math.sin(t*0.05)*3, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // ── COLLISIONS: princess vs jewels ──
+  jewels = jewels.filter(j => {
+    if (Math.hypot(j.x - princess.x, j.y - princess.y) < princess.r + j.r) {
+      score++;
+      burst(j.x, j.y, ['💫','⭐','✨'], 6);
+      updateHUD();
+      setTimeout(() => jewels.push({ ...rndPos(), r: 18, ei: Math.random() * 5 | 0 }), 600);
+      return false;
+    }
+    return true;
+  });
+  while (jewels.length < 5) jewels.push({ ...rndPos(), r: 18, ei: Math.random() * 5 | 0 });
+
+  // ── COLLISIONS: princess vs wands ──
+  wands = wands.filter(w => {
+    if (Math.hypot(w.x - princess.x, w.y - princess.y) < princess.r + w.r) {
+      powered = true; powerTimer = 600;
+      document.getElementById('power-wrap').classList.add('show');
+      burst(w.x, w.y, ['✨','⭐','💫','🌟'], 12);
+      score += 3; updateHUD();
+      setTimeout(() => wands.push({ ...rndPos(100), r: 20 }), 14000);
+      return false;
+    }
+    return true;
+  });
+  if (wands.length === 0 && !powered) wands.push({ ...rndPos(100), r: 20 });
+
+  // ── COLLISIONS: princess vs dragons ──
+  dragons = dragons.filter(d => {
+    if (Math.hypot(d.x - princess.x, d.y - princess.y) < princess.r + d.r - 4) {
+      if (powered) {
+        score += 5; updateHUD();
+        burst(d.x, d.y, ['💥','🌟','✨'], 10);
         return false;
-      } else if(hurtCooldown===0){
-        lives--;
-        hurtCooldown=90;
-        spawnBurst(princess.x,princess.y,'#F44336',10,false);
-        updateHUD();
-        if(lives<=0){ endGame(); }
+      } else if (hurtCD === 0) {
+        lives--; hurtCD = 80; updateHUD();
+        burst(princess.x, princess.y, ['💔','😵','❌'], 6);
+        if (lives <= 0) { endGame(); return true; }
       }
     }
     return true;
   });
 
-  // ── COLLISION: princess vs jewels ──
-  jewels=jewels.filter(j=>{
-    if(Math.hypot(j.x-princess.x,j.y-princess.y)<(princess.r+j.r)*0.85){
-      score+=1;
-      spawnBurst(j.x,j.y,['#E91E63','#9C27B0','#00BCD4','#FFD700','#4CAF50'][j.idx%5],8,true);
-      updateHUD();
-      // spawn replacement
-      setTimeout(()=>jewels.push(spawnJewel()),800);
-      return false;
-    }
-    return true;
-  });
-  // keep minimum jewels
-  while(jewels.length<5) jewels.push(spawnJewel());
-
-  // ── COLLISION: princess vs wands ──
-  wands=wands.filter(w=>{
-    if(Math.hypot(w.x-princess.x,w.y-princess.y)<(princess.r+w.r)*0.9){
-      powered=true; powerTimer=600; // 10s at 60fps
-      document.getElementById('power-bar-wrap').classList.add('show');
-      document.getElementById('power-bar').style.width='100%';
-      spawnBurst(w.x,w.y,'#FFD700',16,true);
-      score+=2;
-      updateHUD();
-      setTimeout(()=>wands.push(spawnWand()), 12000);
-      return false;
-    }
-    return true;
-  });
-  if(wands.length<1 && !powered) wands.push(spawnWand());
-
   // ── PARTICLES ──
-  particles=particles.filter(p=>{
-    p.x+=p.vx; p.y+=p.vy;
-    p.vy+=0.12; // gravity
-    p.life--;
-    drawParticle(p);
-    return p.life>0;
+  particles = particles.filter(p => {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life--;
+    ctx.globalAlpha = p.life / p.maxLife;
+    emoji(p.e, p.x, p.y, p.size);
+    ctx.globalAlpha = 1;
+    return p.life > 0;
   });
 
-  // ── DRAW JEWELS ──
-  jewels.forEach((j,i)=>drawJewel(j.x,j.y,j.r,t,i));
-
-  // ── DRAW WANDS ──
-  wands.forEach((w,i)=>drawWand(w.x,w.y,w.r,t,i));
-
-  // ── DRAW DRAGONS ──
-  dragons.forEach((d,i)=>drawDragon(d.x,d.y,d.r,powered,t,i));
-
-  // ── DRAW PRINCESS ──
-  drawPrincess(princess.x,princess.y,princess.r,powered,hurtCooldown>0&&Math.floor(t/5)%2===0,t);
-
-  // ── TOUCH INDICATOR ──
-  if(!dragFollowing){
-    // prompt circle on princess
-    if(Math.floor(t/40)%2===0){
-      ctx.save();
-      ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.arc(princess.x,princess.y,princess.r*2.2,0,Math.PI*2); ctx.stroke();
-      ctx.restore();
-    }
-  }
-
-  // ── SCORE DISPLAY ──
-  ctx.save();
-  document.getElementById('sv').textContent=score;
-  ctx.restore();
+  // ── SCORE DISPLAY IN-CANVAS (small, top-centre, backup) ──
+  // handled by HUD div
 }
 
-function spawnBurst(x,y,color,n,star){
-  for(let i=0;i<n;i++){
-    const a=Math.random()*Math.PI*2;
-    const spd=2+Math.random()*4;
-    particles.push({
-      x,y,
-      vx:Math.cos(a)*spd, vy:Math.sin(a)*spd-2,
-      r:star?(4+Math.random()*5):(3+Math.random()*4),
-      color, star,
-      life:30+Math.floor(Math.random()*25),
-      maxLife:55
-    });
-  }
-}
-
-function endGame(){
-  gameRunning=false;
-  dragFollowing=false;
-  const board=saveScore(score);
-  document.getElementById('go-score').textContent=score+' pontos';
-  const best=board[0]?.pts||0;
+// ─── END GAME ──────────────────────────────────────────────
+function endGame() {
+  gameRunning = false;
+  grabbedPrincess = false;
+  const board = saveScore(score);
+  document.getElementById('go-score').textContent = score + ' pontos';
+  const best = board[0]?.pts || 0;
   document.getElementById('go-msg').textContent =
-    score>=best && board.length>0
-      ? '🏆 Novo recorde! Incrível!'
-      : score>=30?'👸 Fantástico! Continua assim!'
-      :score>=15?'✨ Muito bem! Podes melhorar!'
-      :'💪 Treina mais e vais conseguir!';
-  renderBoard('lb-wrap2', score);
-  document.getElementById('hsv').textContent=best;
+    score >= best
+      ? '🏆 Novo recorde! Fantástico!'
+      : score >= 30 ? '👸 Incrível! Continua assim!'
+      : score >= 15 ? '✨ Muito bem! Quase!'
+      : '💪 Treina mais e consegues!';
+  renderLB('lb2', score);
+  document.getElementById('hsv').textContent = best;
   document.getElementById('gs').classList.remove('off');
 }
 
-// ── INIT ──
-renderBoard('lb-wrap');
-requestAnimationFrame(loop);
-gameRunning=false;
+// ─── INIT ──────────────────────────────────────────────────
+renderLB('lb');
+frameId = requestAnimationFrame(loop);
+gameRunning = false;
 
-// PWA
-if('serviceWorker' in navigator){
-  const sw=`const C='princesa-fuga-v1';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});`;
-  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'})));
+if ('serviceWorker' in navigator) {
+  const sw = `const C='pfuga-v3';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw], { type: 'text/javascript' })));
 }
 </script>
 </body>
